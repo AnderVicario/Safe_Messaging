@@ -15,13 +15,13 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-public class MainActivity extends AppCompatActivity {
+public class LoginMenu extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.login_menu);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -39,11 +39,11 @@ public class MainActivity extends AppCompatActivity {
                 int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
 
                 if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
-                    usernameInput.setTextColor(ContextCompat.getColor(MainActivity.this, android.R.color.primary_text_dark));
-                    passwordInput.setTextColor(ContextCompat.getColor(MainActivity.this, android.R.color.primary_text_dark));
+                    usernameInput.setTextColor(ContextCompat.getColor(LoginMenu.this, android.R.color.primary_text_dark));
+                    passwordInput.setTextColor(ContextCompat.getColor(LoginMenu.this, android.R.color.primary_text_dark));
                 } else {
-                    usernameInput.setTextColor(ContextCompat.getColor(MainActivity.this, android.R.color.primary_text_light));
-                    passwordInput.setTextColor(ContextCompat.getColor(MainActivity.this, android.R.color.primary_text_light));
+                    usernameInput.setTextColor(ContextCompat.getColor(LoginMenu.this, android.R.color.primary_text_light));
+                    passwordInput.setTextColor(ContextCompat.getColor(LoginMenu.this, android.R.color.primary_text_light));
                 }
 
             }
@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         String password = passwordInput.getText().toString();
 
         if (username.equals(password)){
-            Intent intent = new Intent(this, MainActivity2.class);
+            Intent intent = new Intent(this, ListContacts.class);
             startActivity(intent);
         }
         else{

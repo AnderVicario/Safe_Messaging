@@ -21,7 +21,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ViewHold
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.person_one_line, parent, false);
+                .inflate(R.layout.login_menu_row, parent, false);
         return new ViewHolder(view);
     }
 
@@ -39,19 +39,22 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ViewHold
     static class ViewHolder extends RecyclerView.ViewHolder {
         private final TextView tv_name;
         private final TextView tv_last_message;
+        private final TextView tv_last_message_time;
         private final ImageView iv_icon;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tv_name = itemView.findViewById(R.id.tv_name);
             tv_last_message = itemView.findViewById(R.id.tv_last_message);
+            tv_last_message_time = itemView.findViewById(R.id.tv_last_message_time);
             iv_icon = itemView.findViewById(R.id.iv_icon);
         }
 
         public void bind(Contact contact) {
             tv_name.setText(contact.getName());
             tv_last_message.setText(contact.getLastMessage());
-            iv_icon.setImageResource(R.drawable.icon);
+            tv_last_message_time.setText(contact.getLastMessageTime());
+            iv_icon.setImageResource(R.drawable.ic_launcher_background);
         }
     }
 }
