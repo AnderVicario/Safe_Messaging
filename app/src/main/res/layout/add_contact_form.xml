@@ -3,28 +3,41 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
+    android:background="@color/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/my_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorSecondary"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/surface"
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/toolbarStyle"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="44dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center|left"
+            app:srcCompat="@drawable/cdnlogo_com_whatsapp2"
+            tools:layout_editor_absoluteX="213dp"
+            tools:layout_editor_absoluteY="16dp" />
+
         <TextView
             android:layout_width="wrap_content"
-            android:layout_height="32dp"
+            android:layout_height="28dp"
             android:layout_gravity="center|left"
             android:text="Safe Messaging"
-            android:textColor="@color/onPrimary"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            android:textColor="@color/primary"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            tools:layout_editor_absoluteX="16dp"
+            tools:layout_editor_absoluteY="16dp" />
     </androidx.appcompat.widget.Toolbar>
 
     <com.google.android.material.imageview.ShapeableImageView
