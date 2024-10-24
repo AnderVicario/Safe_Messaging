@@ -2,10 +2,13 @@ package com.av19;
 
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.EditText;
 
 import androidx.activity.EdgeToEdge;
@@ -27,6 +30,10 @@ public class LoginMenu extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        Window window = getWindow();
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.setStatusBarColor(ContextCompat.getColor(this, R.color.surface));
+
         EditText passwordInput = findViewById(R.id.login_password_input);
         EditText usernameInput = findViewById(R.id.login_username_input);
         passwordInput.addTextChangedListener(new TextWatcher() {
@@ -36,16 +43,24 @@ public class LoginMenu extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+                usernameInput.setTextColor(ContextCompat.getColor(LoginMenu.this, R.color.onBackground));
+                passwordInput.setTextColor(ContextCompat.getColor(LoginMenu.this, R.color.onBackground));
+            }
 
-                if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
-                    usernameInput.setTextColor(ContextCompat.getColor(LoginMenu.this, android.R.color.primary_text_dark));
-                    passwordInput.setTextColor(ContextCompat.getColor(LoginMenu.this, android.R.color.primary_text_dark));
-                } else {
-                    usernameInput.setTextColor(ContextCompat.getColor(LoginMenu.this, android.R.color.primary_text_light));
-                    passwordInput.setTextColor(ContextCompat.getColor(LoginMenu.this, android.R.color.primary_text_light));
-                }
+            @Override
+            public void afterTextChanged(Editable editable) {
 
+            }
+        });
+        usernameInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                usernameInput.setTextColor(ContextCompat.getColor(LoginMenu.this, R.color.onBackground));
+                passwordInput.setTextColor(ContextCompat.getColor(LoginMenu.this, R.color.onBackground));
             }
 
             @Override
@@ -67,8 +82,8 @@ public class LoginMenu extends AppCompatActivity {
             startActivity(intent);
         }
         else{
-            usernameInput.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_light));
-            passwordInput.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_light));
+            usernameInput.setTextColor(ContextCompat.getColor(this, R.color.error));
+            passwordInput.setTextColor(ContextCompat.getColor(this, R.color.error));
         }
     }
 }
