@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.Toolbar
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/my_toolbar"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="?attr/actionBarSize"
+    android:background="?attr/colorPrimary"
+    android:theme="?attr/toolbarStyle">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="32dp"
+        android:layout_gravity="center|left"
+        android:text="Safe Messaging"
+        android:textColor="@color/onPrimary"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+</androidx.appcompat.widget.Toolbar>
