@@ -4,9 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ContactList {
-    private List<Contact> contacts = new ArrayList<>();
+    private static ContactList myContactList;
+    private static List<Contact> contacts = new ArrayList<>();
 
-    public ContactList() {
+    private ContactList() {
         this.addContact(new Contact("John Doe", "Hello!", "22m"));
         this.addContact(new Contact("Ivy White", "Have a great day!", "7d"));
         this.addContact(new Contact("Jack Black", "Can't wait to see you!", "33d"));
@@ -26,22 +27,33 @@ public class ContactList {
 
     }
 
-    public void addContact(Contact contact) {
-        int index = 0;
-        for (Contact c : contacts) {
-            if (contact.getLastMessageTimeInMinutes() < c.getLastMessageTimeInMinutes()) {
-                break; // Encuentra el punto de inserción
-            }
-            index++;
+    public static ContactList getInstance() {
+        if (myContactList == null) {
+            myContactList = new ContactList();
         }
-        contacts.add(index, contact); // Inserta en la posición correcta
+        return myContactList;
+    }
+
+    public int addContact(Contact contact) {
+        int contactLastMessageTimeInMinutes = contact.getLastMessageTimeInMinutes();
+        if (contactLastMessageTimeInMinutes == 0) {
+            contacts.add(contact);
+            return contacts.size() - 1;
+        }
+        else{
+            int index = 0;
+            for (Contact c : contacts) {
+                if (contact.getLastMessageTimeInMinutes() < c.getLastMessageTimeInMinutes()) {
+                    break; // Encuentra el punto de inserción
+                }
+                index++;
+            }
+            contacts.add(index, contact); // Inserta en la posición correcta
+            return index;
+        }
     }
 
     public List<Contact> getContacts() {
         return contacts;
-    }
-
-    public void setContacts(List<Contact> contacts) {
-        this.contacts = contacts;
     }
 }
