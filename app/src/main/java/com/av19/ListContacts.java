@@ -1,5 +1,6 @@
 package com.av19;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -7,6 +8,8 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -40,7 +43,7 @@ public class ListContacts extends AppCompatActivity {
     }
 
     private void setUpRecyclerView() {
-        contactList = new ContactList();
+        contactList = ContactList.getInstance();
         contactAdapter = new ContactAdapter(contactList);
         button_add = findViewById(R.id.button_add);
         recyclerView = findViewById(R.id.recyclerView);
@@ -49,6 +52,22 @@ public class ListContacts extends AppCompatActivity {
 
     public void goToAddContactForm(View view) {
         Intent intent = new Intent(this, AddContactForm.class);
-        startActivity(intent);
+        addContactLauncher.launch(intent);
     }
+
+    private final ActivityResultLauncher<Intent> addContactLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    Intent data = result.getData();
+                    if (data != null) {
+                        String newContactName = data.getStringExtra("new_contact_name");
+                        if (newContactName != null) {
+                            int index = ContactList.getInstance().addContact(new Contact(newContactName, "", ""));
+                            contactAdapter.notifyItemInserted(index);
+                        }
+                    }
+                }
+            }
+    );
 }
