@@ -32,7 +32,8 @@ android {
 }
 
 dependencies {
-
+    implementation(libs.sqlite)
+    implementation(libs.android.database.sqlcipher)
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

@@ -43,7 +43,7 @@ public class ListContacts extends AppCompatActivity {
     }
 
     private void setUpRecyclerView() {
-        contactList = ContactList.getInstance();
+        contactList = ContactList.getInstance(this);
         contactAdapter = new ContactAdapter(contactList);
         button_add = findViewById(R.id.button_add);
         recyclerView = findViewById(R.id.recyclerView);
@@ -63,7 +63,7 @@ public class ListContacts extends AppCompatActivity {
                     if (data != null) {
                         String newContactName = data.getStringExtra("new_contact_name");
                         if (newContactName != null) {
-                            int index = ContactList.getInstance().addContact(new Contact(newContactName, "", ""));
+                            int index = ContactList.getInstance(this).addContact(newContactName);
                             contactAdapter.notifyItemInserted(index);
                         }
                     }
