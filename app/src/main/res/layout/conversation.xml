@@ -19,27 +19,36 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:id="@+id/imageView"
-            android:layout_width="44dp"
-            android:layout_height="28dp"
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/profile_icon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:padding="0dp"
             android:layout_gravity="center|left"
-            app:srcCompat="@drawable/cdnlogo_com_whatsapp2"
-            tools:layout_editor_absoluteX="213dp"
-            tools:layout_editor_absoluteY="16dp" />
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:shapeAppearanceOverlay="@style/rounded_corners"
+            tools:srcCompat="@tools:sample/avatars" />
+
+
+        <Space
+            android:layout_width="10dp"
+            android:layout_height="wrap_content"
+            tools:layout_editor_absoluteX="64dp" />
 
         <TextView
+            android:id="@+id/profile_name"
             android:layout_width="wrap_content"
             android:layout_height="28dp"
             android:layout_gravity="center|left"
-            android:text="Safe Messaging"
+            android:text="Matogo"
             android:textColor="@color/primary"
             android:textSize="20sp"
             android:textStyle="bold"
             tools:layout_editor_absoluteX="16dp"
             tools:layout_editor_absoluteY="16dp" />
     </androidx.appcompat.widget.Toolbar>
-
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -51,6 +60,7 @@
         app:layout_constraintTop_toBottomOf="@+id/my_toolbar">
 
         <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/messages"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1" />
@@ -63,7 +73,7 @@
             android:layout_marginBottom="2dp">
 
             <EditText
-                android:id="@+id/login_username_input3"
+                android:id="@+id/message_input"
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"
                 android:layout_weight="1"

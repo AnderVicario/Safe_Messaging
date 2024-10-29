@@ -14,6 +14,10 @@ public class Contact {
         this.messages = messages;
     }
 
+    public int getId() {
+        return id;
+    }
+
     public String getName() {
         return name;
     }
