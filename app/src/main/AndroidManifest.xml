@@ -27,6 +27,9 @@
         <activity
             android:name=".AddContactForm"
             android:exported="false" />
+        <activity
+            android:name=".Conversation"
+            android:exported="false" />
     </application>
 
 </manifest>
