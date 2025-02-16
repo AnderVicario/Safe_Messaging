@@ -1,4 +1,4 @@
-package com.av19;
+package com.av19.ui;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -15,6 +15,8 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.av19.R;
 
 public class AddContactForm extends AppCompatActivity {
 

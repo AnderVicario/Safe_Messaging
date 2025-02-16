@@ -1,4 +1,4 @@
-package com.av19;
+package com.av19.ui;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -16,6 +16,10 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.av19.adapters.ContactAdapter;
+import com.av19.R;
+import com.av19.models.ContactList;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class ListContacts extends AppCompatActivity {

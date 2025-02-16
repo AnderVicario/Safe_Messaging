@@ -1,4 +1,4 @@
-package com.av19;
+package com.av19.adapters;
 
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +12,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.av19.R;
+import com.av19.models.Contact;
+import com.av19.ui.Conversation;
+import com.av19.models.ContactList;
 
 public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ViewHolder> {
 

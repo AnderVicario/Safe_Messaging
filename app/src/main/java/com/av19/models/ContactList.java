@@ -1,9 +1,12 @@
-package com.av19;
+package com.av19.models;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
+
+import com.av19.utils.DatabaseHelper;
+
 import net.sqlcipher.database.SQLiteDatabase;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

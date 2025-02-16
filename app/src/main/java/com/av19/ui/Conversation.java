@@ -1,4 +1,4 @@
-package com.av19;
+package com.av19.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -6,6 +6,8 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.av19.R;
 
 public class Conversation extends AppCompatActivity {
     private TextView profileName;

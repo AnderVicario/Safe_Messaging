@@ -1,4 +1,4 @@
-package com.av19;
+package com.av19.utils;
 
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;

@@ -1,4 +1,4 @@
-package com.av19;
+package com.av19.models;
 
 import java.util.Date;
 import java.util.List;
