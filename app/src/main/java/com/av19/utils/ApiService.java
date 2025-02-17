@@ -19,26 +19,26 @@ import java.util.List;
 public interface ApiService {
 
     // Endpoint para registrar un usuario
-    @POST("register")
+    @POST("users/register")
     Call<ApiResponse> registerUser(@Body UserCreate userCreateData);
 
     // Endpoint para iniciar sesión
-    @POST("login")
+    @POST("users/login")
     Call<ApiResponse> loginUser(@Body UserLogin userLoginData);
 
     // Endpoint para obtener la clave pública de un usuario
-    @GET("get_key/{username}")
+    @GET("users/get_key/{username}")
     Call<PublicKeyResponse> getPublicKey(@Path("username") String username);
 
     // Endpoint para actualizar la clave pública
-    @PUT("update_key")
+    @PUT("users/update_key")
     Call<ApiResponse> updatePublicKey(@Body UpdatePublicKey updatePublicKeyData);
 
     // Endpoint para enviar un mensaje
-    @POST("send_message")
+    @POST("messages/send_message")
     Call<ApiResponse> sendMessage(@Body MessageCreate messageCreateData);
 
     // Endpoint para recibir mensajes de un usuario
-    @GET("receive_messages/{receiver}")
+    @GET("messages/receive_messages/{receiver}")
     Call<List<MessageResponse>> getMessages(@Path("receiver") String receiver);
 }

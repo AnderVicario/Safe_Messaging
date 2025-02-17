@@ -5,4 +5,8 @@
     <string name="login_password">Password</string>
     <string name="name">Name</string>
     <string name="send_message">Send Message</string>
+    <string name="register_password">Confirm password</string>
+    <string name="register">Register</string>
+    <string name="don_t_have_an_account">Don\'t have an account?</string>
+    <string name="already_have_an_account">Already have an account?</string>
 </resources>

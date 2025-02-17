@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -46,8 +45,8 @@ public class LoginMenu extends AppCompatActivity {
         window.setStatusBarColor(ContextCompat.getColor(this, R.color.surface));
 
 
-        EditText passwordInput = findViewById(R.id.login_password_input);
-        EditText usernameInput = findViewById(R.id.login_username_input);
+        EditText passwordInput = findViewById(R.id.register_password_input1);
+        EditText usernameInput = findViewById(R.id.register_username_input);
 
         usernameInput.addTextChangedListener(new TextWatcher() {
             @Override
@@ -90,8 +89,8 @@ public class LoginMenu extends AppCompatActivity {
     }
 
     private void performLogin() {
-        EditText usernameInput = findViewById(R.id.login_username_input);
-        EditText passwordInput = findViewById(R.id.login_password_input);
+        EditText usernameInput = findViewById(R.id.register_username_input);
+        EditText passwordInput = findViewById(R.id.register_password_input1);
 
         String username = usernameInput.getText().toString();
         String password = passwordInput.getText().toString();
