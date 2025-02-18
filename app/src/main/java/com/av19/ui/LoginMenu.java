@@ -1,6 +1,7 @@
 package com.av19.ui;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -33,6 +34,18 @@ public class LoginMenu extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
+        String token = prefs.getString("auth_token", null);
+
+        if (token != null) {
+            Intent intent = new Intent(this, ListContacts.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         EdgeToEdge.enable(this);
         setContentView(R.layout.login_menu);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -106,8 +119,14 @@ public class LoginMenu extends AppCompatActivity {
             public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     ApiResponse apiResponse = response.body();
+
+                    SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
+                    prefs.edit().putString("auth_token", username).apply();
+
                     Toast.makeText(getApplicationContext(), "Login exitoso: " + apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
-                    startActivity(new Intent(LoginMenu.this, ListContacts.class));
+                    Intent intent = new Intent(LoginMenu.this, ListContacts.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
                 } else {
                     Toast.makeText(getApplicationContext(), "Error en el login", Toast.LENGTH_SHORT).show();
                     usernameInput.setTextColor(ContextCompat.getColor(LoginMenu.this, R.color.error));
