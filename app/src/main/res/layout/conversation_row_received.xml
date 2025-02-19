@@ -5,20 +5,29 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <TextView
-        android:id="@+id/tv_message"
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline80"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="ay mi matogo ay mi matogito"
-        android:textSize="14sp"
-        android:textColor="@color/onSurface"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.8" />
+
+    <TextView
+        android:id="@+id/tv_message"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:background="@drawable/received_message"
         android:padding="12sp"
         android:paddingStart="32sp"
         android:paddingEnd="32sp"
+        android:text="ay mi matogo ay mi matogito"
+        android:textColor="@color/onSurface"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@id/guideline80"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent="0.8"/>
+        app:layout_constraintWidth_default="wrap" />
 
     <TextView
         android:id="@+id/tv_send_hour"
