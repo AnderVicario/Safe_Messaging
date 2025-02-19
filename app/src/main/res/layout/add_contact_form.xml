@@ -8,7 +8,7 @@
     android:layout_height="match_parent">
 
     <androidx.appcompat.widget.Toolbar
-        android:id="@+id/my_toolbar"
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/surface"
@@ -20,7 +20,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-            android:id="@+id/imageView"
+            android:id="@+id/iv_logo"
             android:layout_width="44dp"
             android:layout_height="28dp"
             android:layout_gravity="center|left"
@@ -47,7 +47,7 @@
         android:layout_marginTop="32dp"
         app:layout_constraintEnd_toStartOf="@+id/guideline2"
         app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toBottomOf="@+id/my_toolbar"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
         app:shapeAppearanceOverlay="@style/rounded_corners"
         tools:srcCompat="@drawable/ic_launcher_background" />
 

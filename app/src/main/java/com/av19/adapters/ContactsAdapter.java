@@ -15,15 +15,15 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.av19.R;
 import com.av19.models.Contact;
-import com.av19.ui.Conversation;
 import com.av19.models.ContactList;
+import com.av19.ui.Conversation;
 
-public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ViewHolder> {
+public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> {
 
     private final ContactList contactList;
     private final Context context;
 
-    public ContactAdapter(ContactList contactList, Context context) {
+    public ContactsAdapter(ContactList contactList, Context context) {
         this.contactList = contactList;
         this.context = context;
     }
@@ -72,8 +72,9 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ViewHold
 
                     // Launch Conversation with contact details
                     Intent intent = new Intent(context, Conversation.class);
-                    intent.putExtra("contact_id", contact.getId());
+                    intent.putExtra("contact_id", String.valueOf(contact.getId()));
                     intent.putExtra("contact_name", contact.getName());
+                    intent.putExtra("contact_public_key", contact.getPublicKey());
                     context.startActivity(intent);
                 }
             });
@@ -81,8 +82,8 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ViewHold
 
         public void bind(Contact contact) {
             tv_name.setText(contact.getName());
-            tv_last_message.setText(contact.getLastMessage());
-            tv_last_message_time.setText(contact.getLastMessageTime());
+            tv_last_message.setText(contact.getLastMessagePreview());
+            tv_last_message_time.setText(contact.getFormattedLastMessageTime());
             iv_icon.setImageResource(R.drawable.ic_launcher_background);
         }
     }

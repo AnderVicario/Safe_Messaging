@@ -6,10 +6,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <TextView
-        android:id="@+id/textMessage"
+        android:id="@+id/tv_message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="ay mi matogo ay mi matogito"
+        android:textSize="14sp"
         android:textColor="@color/onSurface"
         android:background="@drawable/received_message"
         android:padding="12sp"
@@ -18,4 +19,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintWidth_percent="0.8"/>
+
+    <TextView
+        android:id="@+id/tv_send_hour"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="10:52"
+        android:textSize="12sp"
+        android:textColor="@color/onBackground"
+        android:padding="6sp"
+        android:paddingStart="32sp"
+        android:paddingEnd="32sp"
+        app:layout_constraintTop_toBottomOf="@id/tv_message"
+        app:layout_constraintStart_toStartOf="@id/tv_message"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

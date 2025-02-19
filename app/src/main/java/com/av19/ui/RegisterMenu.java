@@ -23,8 +23,8 @@ import com.av19.R;
 import com.av19.models.api.ApiResponse;
 import com.av19.models.api.PublicKeyResponse;
 import com.av19.models.api.UserCreate;
-import com.av19.models.api.UserLogin;
 import com.av19.utils.ApiService;
+import com.av19.utils.DatabaseHelper;
 import com.av19.utils.RSAEncryptionManager;
 import com.av19.utils.RetrofitClient;
 
@@ -61,9 +61,9 @@ public class RegisterMenu extends AppCompatActivity {
         window.setStatusBarColor(ContextCompat.getColor(this, R.color.surface));
 
 
-        EditText passwordInput1 = findViewById(R.id.register_password_input1);
-        EditText passwordInput2 = findViewById(R.id.register_password_input2);
-        EditText usernameInput = findViewById(R.id.register_username_input);
+        EditText passwordInput1 = findViewById(R.id.et_register_password_1);
+        EditText passwordInput2 = findViewById(R.id.et_register_password_2);
+        EditText usernameInput = findViewById(R.id.et_register_username);
 
         usernameInput.addTextChangedListener(new TextWatcher() {
             @Override
@@ -113,17 +113,17 @@ public class RegisterMenu extends AppCompatActivity {
             }
         });
 
-        Button registerButton = findViewById(R.id.send_button);
-        TextView textLogin = findViewById(R.id.textView);
+        Button registerButton = findViewById(R.id.btn_send);
+        TextView textLogin = findViewById(R.id.tv_toggle_reg_login);
 
         registerButton.setOnClickListener(v -> performRegister());
         textLogin.setOnClickListener(v -> startActivity(new Intent(this, ListContacts.class)));
     }
 
     private void performRegister() {
-        EditText usernameInput = findViewById(R.id.register_username_input);
-        EditText passwordInput1 = findViewById(R.id.register_password_input1);
-        EditText passwordInput2 = findViewById(R.id.register_password_input2);
+        EditText usernameInput = findViewById(R.id.et_register_username);
+        EditText passwordInput1 = findViewById(R.id.et_register_password_1);
+        EditText passwordInput2 = findViewById(R.id.et_register_password_2);
 
         String username = usernameInput.getText().toString();
         String password1 = passwordInput1.getText().toString();
@@ -166,6 +166,8 @@ public class RegisterMenu extends AppCompatActivity {
 
                                 SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
                                 prefs.edit().putString("auth_token", username).apply();
+
+                                DatabaseHelper.setPassword(RegisterMenu.this, password1);
 
                                 Toast.makeText(getApplicationContext(), "Register exitoso: " + apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
                                 Intent intent = new Intent(RegisterMenu.this, ListContacts.class);

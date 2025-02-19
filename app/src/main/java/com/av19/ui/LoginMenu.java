@@ -23,6 +23,7 @@ import com.av19.R;
 import com.av19.models.api.ApiResponse;
 import com.av19.models.api.UserLogin;
 import com.av19.utils.ApiService;
+import com.av19.utils.DatabaseHelper;
 import com.av19.utils.RetrofitClient;
 
 import retrofit2.Call;
@@ -58,8 +59,8 @@ public class LoginMenu extends AppCompatActivity {
         window.setStatusBarColor(ContextCompat.getColor(this, R.color.surface));
 
 
-        EditText passwordInput = findViewById(R.id.register_password_input1);
-        EditText usernameInput = findViewById(R.id.register_username_input);
+        EditText passwordInput = findViewById(R.id.et_register_password_1);
+        EditText usernameInput = findViewById(R.id.et_register_username);
 
         usernameInput.addTextChangedListener(new TextWatcher() {
             @Override
@@ -94,16 +95,16 @@ public class LoginMenu extends AppCompatActivity {
             }
         });
 
-        Button loginButton = findViewById(R.id.send_button);
-        TextView textRegister = findViewById(R.id.textView);
+        Button loginButton = findViewById(R.id.btn_send);
+        TextView textRegister = findViewById(R.id.tv_toggle_reg_login);
 
         loginButton.setOnClickListener(v -> performLogin());
         textRegister.setOnClickListener(v -> startActivity(new Intent(this, RegisterMenu.class)));
     }
 
     private void performLogin() {
-        EditText usernameInput = findViewById(R.id.register_username_input);
-        EditText passwordInput = findViewById(R.id.register_password_input1);
+        EditText usernameInput = findViewById(R.id.et_register_username);
+        EditText passwordInput = findViewById(R.id.et_register_password_1);
 
         String username = usernameInput.getText().toString();
         String password = passwordInput.getText().toString();
@@ -122,6 +123,8 @@ public class LoginMenu extends AppCompatActivity {
 
                     SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
                     prefs.edit().putString("auth_token", username).apply();
+
+                    DatabaseHelper.setPassword(LoginMenu.this, password);
 
                     Toast.makeText(getApplicationContext(), "Login exitoso: " + apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(LoginMenu.this, ListContacts.class);

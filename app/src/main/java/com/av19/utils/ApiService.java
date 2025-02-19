@@ -8,13 +8,14 @@ import com.av19.models.api.UpdatePublicKey;
 import com.av19.models.api.UserCreate;
 import com.av19.models.api.UserLogin;
 
+import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
-import java.util.List;
 
 public interface ApiService {
 

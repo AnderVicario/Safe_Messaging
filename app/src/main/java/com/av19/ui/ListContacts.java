@@ -17,15 +17,15 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.av19.adapters.ContactAdapter;
 import com.av19.R;
+import com.av19.adapters.ContactsAdapter;
 import com.av19.models.ContactList;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class ListContacts extends AppCompatActivity {
 
     ContactList contactList;
-    ContactAdapter contactAdapter;
+    ContactsAdapter contactsAdapter;
     RecyclerView recyclerView;
     FloatingActionButton button_add;
 
@@ -48,10 +48,10 @@ public class ListContacts extends AppCompatActivity {
 
     private void setUpRecyclerView() {
         contactList = ContactList.getInstance(this);
-        contactAdapter = new ContactAdapter(contactList, this);
+        contactsAdapter = new ContactsAdapter(contactList, this);
         button_add = findViewById(R.id.button_add);
         recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setAdapter(contactAdapter);
+        recyclerView.setAdapter(contactsAdapter);
     }
 
     public void goToAddContactForm(View view) {
@@ -66,9 +66,10 @@ public class ListContacts extends AppCompatActivity {
                     Intent data = result.getData();
                     if (data != null) {
                         String newContactName = data.getStringExtra("new_contact_name");
-                        if (newContactName != null) {
-                            int index = ContactList.getInstance(this).addContact(newContactName);
-                            contactAdapter.notifyItemInserted(index);
+                        String newPublicKey = data.getStringExtra("new_public_key");
+                        if (newContactName != null && newPublicKey != null) {
+                            int index = ContactList.getInstance(this).addContact(newContactName, newPublicKey);
+                            contactsAdapter.notifyItemInserted(index);
                         }
                     }
                 }

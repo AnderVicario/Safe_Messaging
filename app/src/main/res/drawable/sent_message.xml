@@ -5,5 +5,5 @@
         android:topLeftRadius="24dp"
         android:topRightRadius="24dp"
         android:bottomLeftRadius="24dp"
-        android:bottomRightRadius="0dp" /> <!-- Sin redondeo en la esquina inferior derecha -->
+        android:bottomRightRadius="6dp" /> <!-- Sin redondeo en la esquina inferior derecha -->
 </shape>

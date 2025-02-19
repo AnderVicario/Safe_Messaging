@@ -5,17 +5,40 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <TextView
-        android:id="@+id/textMessage"
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline80"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="ay mi matogo ay mi matogito"
-        android:textColor="@color/onSurface"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.2" />
+
+    <TextView
+        android:id="@+id/tv_message"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:background="@drawable/sent_message"
         android:padding="12sp"
         android:paddingStart="32sp"
         android:paddingEnd="32sp"
+        android:text="ay mi matogo ay mi matogito"
+        android:textColor="@color/onSurface"
+        android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@id/guideline80"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent="0.8"/>
+        app:layout_constraintWidth_default="wrap" />
+
+    <TextView
+        android:id="@+id/tv_send_hour"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="10:52"
+        android:textSize="12sp"
+        android:textColor="@color/onBackground"
+        android:padding="6sp"
+        android:paddingStart="32sp"
+        android:paddingEnd="32sp"
+        app:layout_constraintTop_toBottomOf="@id/tv_message"
+        app:layout_constraintEnd_toEndOf="@id/tv_message"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
