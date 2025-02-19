@@ -3,9 +3,13 @@ package com.av19.ui;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+
+import androidx.appcompat.widget.PopupMenu;
+import androidx.appcompat.widget.Toolbar;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
@@ -44,6 +48,22 @@ public class ListContacts extends AppCompatActivity {
         window.setStatusBarColor(ContextCompat.getColor(this, R.color.surface));
 
         setUpRecyclerView();
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if(getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+            //getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        }
+        PopupMenu popup = new PopupMenu(this, toolbar);
+        popup.getMenuInflater().inflate(R.menu.main_menu, popup.getMenu());
+        popup.show();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return true;
     }
 
     private void setUpRecyclerView() {
