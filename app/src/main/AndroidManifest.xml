@@ -39,7 +39,8 @@
             android:exported="false" />
         <activity
             android:name=".ui.Conversation"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"/>
     </application>
 
 </manifest>

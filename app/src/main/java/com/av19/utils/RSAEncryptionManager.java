@@ -1,28 +1,54 @@
 package com.av19.utils;
 
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
+
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
+import java.security.KeyStore;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.cert.Certificate;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
-import java.util.HashMap;
 
 import javax.crypto.Cipher;
 
 public class RSAEncryptionManager {
+    private static final String ALIAS = "MyRSAKey";
     private static RSAEncryptionManager instance;
-    private KeyPair keyPair;  // Claves del usuario
-    private HashMap<String, PublicKey> contactKeys; // Claves públicas de contactos
+    private PublicKey publicKey;
+    private PrivateKey privateKey;
 
     private RSAEncryptionManager() {
         try {
-            // Generar claves RSA
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-            keyGen.initialize(2048);
-            this.keyPair = keyGen.generateKeyPair();
-            this.contactKeys = new HashMap<>();
-        } catch (NoSuchAlgorithmException e) {
+            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null);
+
+            if (!keyStore.containsAlias(ALIAS)) {
+                // Generar y guardar la clave en el Keystore
+                KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(
+                        KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
+                keyPairGenerator.initialize(
+                        new KeyGenParameterSpec.Builder(
+                                ALIAS,
+                                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                                .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
+                                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
+                                .build()
+                );
+                KeyPair keyPair = keyPairGenerator.generateKeyPair();
+                publicKey = keyPair.getPublic();
+                privateKey = keyPair.getPrivate();
+            } else {
+                // Cargar la clave del Keystore
+                KeyStore.PrivateKeyEntry entry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(ALIAS, null);
+                privateKey = entry.getPrivateKey();
+                publicKey = entry.getCertificate().getPublicKey();
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -34,36 +60,26 @@ public class RSAEncryptionManager {
         return instance;
     }
 
-    // Obtener clave pública en Base64
-    public String getPublicKey() {
-        return Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
+    public PublicKey getPublicKey() {
+        return publicKey;
     }
 
-    // Obtener clave privada en Base64
-    private String getPrivateKey() {
-        return Base64.getEncoder().encodeToString(keyPair.getPrivate().getEncoded());
+    public static String publicKeyToString(PublicKey publicKey) {
+        return Base64.getEncoder().encodeToString(publicKey.getEncoded());
     }
 
-    // Agregar clave pública de un contacto
-    public void addContactKey(String contactName, PublicKey publicKey) {
-        contactKeys.put(contactName, publicKey);
-    }
-
-    // Obtener clave pública de un contacto
-    public PublicKey getContactKey(String contactName) {
-        return contactKeys.get(contactName);
-    }
-
-    // Encriptar mensaje con clave pública del destinatario
-    public String encryptMessage(String message, String contactName) {
+    public String encryptMessage(String plaintext, String publicKeyStr) {
         try {
-            PublicKey contactKey = contactKeys.get(contactName);
-            if (contactKey == null) {
-                throw new Exception("Clave pública del contacto no encontrada");
-            }
-            Cipher cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.ENCRYPT_MODE, contactKey);
-            byte[] encryptedBytes = cipher.doFinal(message.getBytes());
+            // Decodificar el String de la clave pública
+            byte[] publicKeyBytes = Base64.getDecoder().decode(publicKeyStr);
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            PublicKey publicKey = keyFactory.generatePublic(keySpec);
+
+            // Utilizamos el modo RSA con relleno PKCS1
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            byte[] encryptedBytes = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(encryptedBytes);
         } catch (Exception e) {
             e.printStackTrace();
@@ -71,36 +87,15 @@ public class RSAEncryptionManager {
         }
     }
 
-    // Desencriptar mensaje con clave privada del usuario
-    public String decryptMessage(String encryptedMessage) {
+    public String decryptMessage(String encryptedData) {
         try {
-            Cipher cipher = Cipher.getInstance("RSA");
-            cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
-            byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedMessage));
-            return new String(decryptedBytes);
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            cipher.init(Cipher.DECRYPT_MODE, privateKey);
+            byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedData));
+            return new String(decryptedBytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
-
-    // Simular envío de clave pública a la API
-    public void sendPublicKeyToAPI() {
-        System.out.println("Enviando clave pública a la API: " + getPublicKey());
-        // Aquí iría la lógica para enviar la clave pública a la API
-    }
-
-    // Simular solicitud de clave pública de un contacto desde la API
-    public void requestContactKeyFromAPI(String contactName, String contactPublicKeyBase64) {
-        try {
-            byte[] publicKeyBytes = Base64.getDecoder().decode(contactPublicKeyBase64);
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            PublicKey publicKey = keyFactory.generatePublic(new java.security.spec.X509EncodedKeySpec(publicKeyBytes));
-            addContactKey(contactName, publicKey);
-            System.out.println("Clave pública de " + contactName + " almacenada.");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }
-

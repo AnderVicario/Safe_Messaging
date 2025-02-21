@@ -150,7 +150,7 @@ public class RegisterMenu extends AppCompatActivity {
                 } else {
                     // Crear par de llaves
                     RSAEncryptionManager rsaEncryptionManager = RSAEncryptionManager.getInstance();
-                    String publicKey = rsaEncryptionManager.getPublicKey();
+                    String publicKey = RSAEncryptionManager.publicKeyToString(rsaEncryptionManager.getPublicKey());
 
                     // 2. Llamada a la API para registrar el usuario
                     ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);

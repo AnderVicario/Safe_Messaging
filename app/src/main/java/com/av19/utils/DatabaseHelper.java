@@ -1,6 +1,7 @@
 package com.av19.utils;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.ContentValues;
 
 import androidx.security.crypto.EncryptedSharedPreferences;
@@ -8,8 +9,19 @@ import androidx.security.crypto.MasterKey;
 
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
+
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.SecureRandom;
+import java.util.Base64;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "contacts.db";
@@ -17,6 +29,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static volatile DatabaseHelper instance;
     private static SQLiteDatabase database;
     private Context context;
+    // Alias distinto para la clave de cifrado de la contraseña
+    private static final String DB_PASSWORD_ALIAS = "DBPasswordKey";
+    // SharedPreferences para almacenar la contraseña cifrada
+    private static final String PREFS_NAME = "db_prefs";
+    private static final String PREF_PASSWORD = "db_password";
+    private static final String PREF_PASSWORD_IV = "db_password_iv";
 
     private DatabaseHelper(Context context) {
         super(context.getApplicationContext(), DATABASE_NAME, null, DATABASE_VERSION);
@@ -31,49 +49,84 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return instance;
     }
 
+    /**
+     * Guarda la contraseña de la base de datos cifrándola con una clave simétrica
+     * almacenada en el Keystore bajo el alias DB_PASSWORD_ALIAS.
+     */
     public static void setPassword(Context context, String password) {
         try {
-            MasterKey masterKey = new MasterKey.Builder(context)
-                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                    .build();
+            // Inicializar el KeyStore y cargarlo
+            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null);
+            SecretKey secretKey;
 
-            EncryptedSharedPreferences encryptedSharedPreferences = (EncryptedSharedPreferences) EncryptedSharedPreferences.create(
-                    context,
-                    "encrypted_db_prefs",
-                    masterKey,
-                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            );
+            // Si no existe la clave para la contraseña, se genera
+            if (!keyStore.containsAlias(DB_PASSWORD_ALIAS)) {
+                KeyGenerator keyGenerator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
+                keyGenerator.init(
+                        new android.security.keystore.KeyGenParameterSpec.Builder(
+                                DB_PASSWORD_ALIAS,
+                                android.security.keystore.KeyProperties.PURPOSE_ENCRYPT | android.security.keystore.KeyProperties.PURPOSE_DECRYPT)
+                                .setBlockModes(android.security.keystore.KeyProperties.BLOCK_MODE_GCM)
+                                .setEncryptionPaddings(android.security.keystore.KeyProperties.ENCRYPTION_PADDING_NONE)
+                                .setKeySize(256)
+                                .build()
+                );
+                secretKey = keyGenerator.generateKey();
+            } else {
+                KeyStore.SecretKeyEntry entry = (KeyStore.SecretKeyEntry) keyStore.getEntry(DB_PASSWORD_ALIAS, null);
+                secretKey = entry.getSecretKey();
+            }
 
-            encryptedSharedPreferences.edit()
-                    .putString("db_password", password)
+            // Cifrar la contraseña con AES/GCM
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            byte[] iv = cipher.getIV();
+            byte[] ciphertext = cipher.doFinal(password.getBytes(StandardCharsets.UTF_8));
+
+            // Almacenar el resultado cifrado y el IV en SharedPreferences
+            SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            prefs.edit()
+                    .putString(PREF_PASSWORD, Base64.getEncoder().encodeToString(ciphertext))
+                    .putString(PREF_PASSWORD_IV, Base64.getEncoder().encodeToString(iv))
                     .apply();
-        } catch (GeneralSecurityException | IOException e) {
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * Recupera la contraseña almacenada cifrada y la utiliza para abrir la base de datos.
+     */
     public synchronized SQLiteDatabase getEncryptedWritableDatabase() {
         if (database == null || !database.isOpen()) {
             try {
-                MasterKey masterKey = new MasterKey.Builder(context)
-                        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                        .build();
+                // Recuperar la clave simétrica del Keystore
+                KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+                keyStore.load(null);
+                KeyStore.SecretKeyEntry entry = (KeyStore.SecretKeyEntry) keyStore.getEntry(DB_PASSWORD_ALIAS, null);
+                SecretKey secretKey = entry.getSecretKey();
 
-                EncryptedSharedPreferences encryptedSharedPreferences = (EncryptedSharedPreferences) EncryptedSharedPreferences.create(
-                        context,
-                        "encrypted_db_prefs",
-                        masterKey,
-                        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-                );
-
-                String password = encryptedSharedPreferences.getString("db_password", null);
-                if (password == null) {
+                // Recuperar la contraseña cifrada y el IV desde SharedPreferences
+                SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+                String encryptedPassword = prefs.getString(PREF_PASSWORD, null);
+                String ivString = prefs.getString(PREF_PASSWORD_IV, null);
+                if (encryptedPassword == null || ivString == null) {
                     throw new IllegalStateException("Password not found in secure storage");
                 }
+                byte[] ciphertext = Base64.getDecoder().decode(encryptedPassword);
+                byte[] iv = Base64.getDecoder().decode(ivString);
+
+                // Descifrar la contraseña
+                Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+                GCMParameterSpec spec = new GCMParameterSpec(128, iv);
+                cipher.init(Cipher.DECRYPT_MODE, secretKey, spec);
+                byte[] passwordBytes = cipher.doFinal(ciphertext);
+                String password = new String(passwordBytes, StandardCharsets.UTF_8);
+
                 database = super.getWritableDatabase(password);
-            } catch (GeneralSecurityException | IOException e) {
+            } catch (Exception e) {
                 throw new RuntimeException("Failed to open database", e);
             }
         }
@@ -92,7 +145,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 "FOREIGN KEY(contact_id) REFERENCES contacts(id)" +
                 ")");
 
-        // Pasar el objeto db a insertSampleData
+        // Insertar datos de ejemplo
         insertSampleData(db);
     }
 
@@ -113,11 +166,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // Insertar mensaje de prueba asociado al contacto
         ContentValues messageValues = new ContentValues();
         messageValues.put("contact_id", contactId);
-        messageValues.put("is_sender", 1); // 1 = true (es remitente)
-        messageValues.put("message", "¡Hola! Este es un mensaje de pruebaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        messageValues.put("is_sender", 1);
+        messageValues.put("message", "¡Hola! Este es un mensaje de prueba");
         messageValues.put("sent_at", "2025-02-18T20:16:51.143Z");
         db.insert("messages", null, messageValues);
+        // Otros inserts...
     }
 }
-
-

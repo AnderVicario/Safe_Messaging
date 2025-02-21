@@ -76,7 +76,7 @@ public class ContactList {
 
     // Método para convertir la cadena a Date
     private Date convertStringToDate(String dateString) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault());
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault());
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
         try {
             return sdf.parse(dateString);

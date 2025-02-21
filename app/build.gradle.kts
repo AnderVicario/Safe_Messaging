@@ -36,6 +36,7 @@ dependencies {
     implementation(libs.android.database.sqlcipher)
     implementation(libs.security.crypto)
     implementation(libs.appcompat)
+    implementation(libs.logging.interceptor)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)

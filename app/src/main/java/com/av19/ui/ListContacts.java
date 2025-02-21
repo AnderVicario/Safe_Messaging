@@ -53,11 +53,7 @@ public class ListContacts extends AppCompatActivity {
         setSupportActionBar(toolbar);
         if(getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
-            //getSupportActionBar().setDisplayHomeAsUpEnabled(false);
         }
-        PopupMenu popup = new PopupMenu(this, toolbar);
-        popup.getMenuInflater().inflate(R.menu.main_menu, popup.getMenu());
-        popup.show();
     }
 
     @Override
