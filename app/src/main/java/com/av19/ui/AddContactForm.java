@@ -1,11 +1,8 @@
 package com.av19.ui;
 
-import static android.content.ContentValues.TAG;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -23,7 +20,6 @@ import androidx.core.view.WindowInsetsCompat;
 import com.av19.R;
 import com.av19.models.api.PublicKeyResponse;
 import com.av19.utils.ApiService;
-import com.av19.utils.RSAEncryptionManager;
 import com.av19.utils.RetrofitClient;
 
 import retrofit2.Call;

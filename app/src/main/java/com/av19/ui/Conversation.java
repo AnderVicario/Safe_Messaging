@@ -26,7 +26,7 @@ import com.av19.models.api.MessageCreate;
 import com.av19.models.api.MessageResponse;
 import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
-import com.av19.utils.RSAEncryptionManager;
+import com.av19.utils.ECCEncryptionManager;
 import com.av19.utils.RetrofitClient;
 
 import net.sqlcipher.Cursor;
@@ -179,8 +179,14 @@ public class Conversation extends AppCompatActivity {
         messageEditText.setText("");
 
         // Encriptar el mensaje usando la clave pública del contacto
-        RSAEncryptionManager encryptionManager = RSAEncryptionManager.getInstance();
-        String encryptedMessage = encryptionManager.encryptMessage(messageText, contactPublicKey);
+        String encryptedMessage = null;
+        try {
+            ECCEncryptionManager eccEncryptionManager = ECCEncryptionManager.getInstance(Boolean.FALSE, currentUser);
+            encryptedMessage = eccEncryptionManager.encrypt(messageText, contactPublicKey);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         if (encryptedMessage == null) {
             Log.e("Conversation", "Error al encriptar el mensaje");
             return;
@@ -254,7 +260,6 @@ public class Conversation extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     List<MessageResponse> messagesResponse = response.body();
                     List<Message> newMessages = new ArrayList<>();
-                    RSAEncryptionManager encryptionManager = RSAEncryptionManager.getInstance();
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault());
                     sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 
@@ -285,7 +290,14 @@ public class Conversation extends AppCompatActivity {
                         }
 
                         // Desencriptar el mensaje
-                        String decryptedMessage = encryptionManager.decryptMessage(mr.getEncrypted_message());
+                        String decryptedMessage = null;
+                        try{
+                            ECCEncryptionManager eccEncryptionManager = ECCEncryptionManager.getInstance(Boolean.FALSE, currentUser);
+                            decryptedMessage = eccEncryptionManager.decrypt(mr.getEncrypted_message());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
                         if (decryptedMessage == null) {
                             continue; // Si hay un error en la desencriptación, no lo guardamos
                         }

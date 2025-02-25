@@ -2,6 +2,7 @@ package com.av19.ui;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
@@ -24,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.av19.R;
 import com.av19.adapters.ContactsAdapter;
 import com.av19.models.ContactList;
+import com.av19.utils.ECCEncryptionManager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class ListContacts extends AppCompatActivity {
@@ -47,6 +49,7 @@ public class ListContacts extends AppCompatActivity {
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         window.setStatusBarColor(ContextCompat.getColor(this, R.color.surface));
 
+        setUpUserKeys();
         setUpRecyclerView();
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -91,4 +94,14 @@ public class ListContacts extends AppCompatActivity {
                 }
             }
     );
+
+    private void setUpUserKeys() {
+        SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
+        String username = prefs.getString("auth_token", null);
+        try {
+            ECCEncryptionManager.getInstance(Boolean.FALSE, username);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
