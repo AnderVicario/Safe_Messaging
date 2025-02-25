@@ -12,6 +12,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
@@ -24,9 +25,9 @@ import com.av19.models.Message;
 import com.av19.models.api.ApiResponse;
 import com.av19.models.api.MessageCreate;
 import com.av19.models.api.MessageResponse;
+import com.av19.utils.AESEncryptionManager;
 import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
-import com.av19.utils.ECCEncryptionManager;
 import com.av19.utils.RetrofitClient;
 
 import net.sqlcipher.Cursor;
@@ -76,6 +77,7 @@ public class Conversation extends AppCompatActivity {
      */
     private void initializeUI() {
         // Habilitar EdgeToEdge y asignar el layout
+        EdgeToEdge.enable(this);
         setContentView(R.layout.conversation);
         // Configurar el color de la barra de estado
         Window window = getWindow();
@@ -181,8 +183,9 @@ public class Conversation extends AppCompatActivity {
         // Encriptar el mensaje usando la clave pública del contacto
         String encryptedMessage = null;
         try {
-            ECCEncryptionManager eccEncryptionManager = ECCEncryptionManager.getInstance(Boolean.FALSE, currentUser);
-            encryptedMessage = eccEncryptionManager.encrypt(messageText, contactPublicKey);
+  /*          ECCEncryptionManager eccEncryptionManager = ECCEncryptionManager.getInstance(Boolean.FALSE, currentUser);
+            encryptedMessage = eccEncryptionManager.encrypt(messageText, contactPublicKey);*/
+            encryptedMessage = AESEncryptionManager.encryptText(messageText, AESEncryptionManager.getAESKey(contactName));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -285,15 +288,16 @@ public class Conversation extends AppCompatActivity {
                         String sentAtString = mr.getTimestamp();
 
                         // Si el mensaje ya existe, lo ignoramos
-                        if (existingTimestamps.contains(sentAtString)) {
+                        if (existingTimestamps.contains(sentAtString) || mr.getIs_initial()) {
                             continue;
                         }
 
                         // Desencriptar el mensaje
                         String decryptedMessage = null;
                         try{
-                            ECCEncryptionManager eccEncryptionManager = ECCEncryptionManager.getInstance(Boolean.FALSE, currentUser);
-                            decryptedMessage = eccEncryptionManager.decrypt(mr.getEncrypted_message());
+                           /* ECCEncryptionManager eccEncryptionManager = ECCEncryptionManager.getInstance(Boolean.FALSE, currentUser);
+                            decryptedMessage = eccEncryptionManager.decrypt(mr.getEncrypted_message());*/
+                            decryptedMessage = AESEncryptionManager.decryptText(mr.getEncrypted_message(), AESEncryptionManager.getAESKey(contactName));
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

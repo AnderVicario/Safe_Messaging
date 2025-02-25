@@ -25,7 +25,7 @@ import com.av19.models.api.PublicKeyResponse;
 import com.av19.models.api.UserCreate;
 import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
-import com.av19.utils.ECCEncryptionManager;
+import com.av19.utils.RSAEncryptionManager;
 import com.av19.utils.RetrofitClient;
 
 import retrofit2.Call;
@@ -151,12 +151,10 @@ public class RegisterMenu extends AppCompatActivity {
                     // Crear par de llaves
                     String publicKey = null;
                     try{
-                        ECCEncryptionManager eccEncryptionManager = ECCEncryptionManager.getInstance(Boolean.TRUE, username);
-                        publicKey = eccEncryptionManager.getPublicKeyString();
+                        publicKey = RSAEncryptionManager.getInstance(Boolean.TRUE, username).publicKeyString;
                     } catch (Exception e){
                         e.printStackTrace();
                     }
-
 
                     // 2. Llamada a la API para registrar el usuario
                     ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);

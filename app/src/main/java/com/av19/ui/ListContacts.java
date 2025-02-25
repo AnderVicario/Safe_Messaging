@@ -25,7 +25,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.av19.R;
 import com.av19.adapters.ContactsAdapter;
 import com.av19.models.ContactList;
-import com.av19.utils.ECCEncryptionManager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class ListContacts extends AppCompatActivity {
@@ -98,10 +97,10 @@ public class ListContacts extends AppCompatActivity {
     private void setUpUserKeys() {
         SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
         String username = prefs.getString("auth_token", null);
-        try {
+/*        try {
             ECCEncryptionManager.getInstance(Boolean.FALSE, username);
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
+        }*/
     }
 }

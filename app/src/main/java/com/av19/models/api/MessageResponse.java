@@ -4,13 +4,15 @@ public class MessageResponse {
     private String sender;
     private String encrypted_message;
     private String timestamp;
+    private Boolean is_initial;
 
     public MessageResponse() { }
 
-    public MessageResponse(String sender, String encrypted_message, String timestamp) {
+    public MessageResponse(String sender, String encrypted_message, String timestamp, Boolean is_initial) {
         this.sender = sender;
         this.encrypted_message = encrypted_message;
         this.timestamp = timestamp;
+        this.is_initial = is_initial;
     }
 
     public String getSender() {
@@ -35,5 +37,13 @@ public class MessageResponse {
 
     public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public Boolean getIs_initial() {
+        return is_initial;
+    }
+
+    public void setIs_initial(Boolean is_initial) {
+        this.is_initial = is_initial;
     }
 }
