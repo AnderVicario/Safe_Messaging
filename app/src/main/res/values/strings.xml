@@ -1,12 +1,12 @@
 <resources>
-    <string name="app_name">Umbra</string>
+    <string name="app_name" translatable="false">Umbra</string>
     <string name="login">Login</string>
     <string name="login_username">Username</string>
     <string name="login_password">Password</string>
-    <string name="name">Name</string>
+    <string name="add_username">Username to Add</string>
     <string name="send_message">Send Message</string>
     <string name="register_password">Confirm password</string>
     <string name="register">Register</string>
-    <string name="don_t_have_an_account">Don\'t have an account?</string>
-    <string name="already_have_an_account">Already have an account?</string>
+    <string name="open_register">Don\'t have an account?</string>
+    <string name="open_login">Already have an account?</string>
 </resources>

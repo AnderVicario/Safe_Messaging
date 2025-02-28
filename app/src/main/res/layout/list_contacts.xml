@@ -35,7 +35,7 @@
             android:layout_width="wrap_content"
             android:layout_height="28dp"
             android:layout_gravity="center|left"
-            android:text="Safe Messaging"
+            android:text="@string/app_name"
             android:textColor="@color/primary"
             android:textSize="20sp"
             android:textStyle="bold"

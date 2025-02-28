@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="login">Inciar sesión</string>
+    <string name="login_username">Usuario</string>
+    <string name="login_password">Contraseña</string>
+    <string name="add_username">Usuario a añadir</string>
+    <string name="send_message">Enviar mensaje</string>
+    <string name="register_password">Confirmar contraseña</string>
+    <string name="register">Registrarse</string>
+    <string name="open_register">No tienes cuenta?</string>
+    <string name="open_login">Ya tienes cuenta?</string>
+</resources>

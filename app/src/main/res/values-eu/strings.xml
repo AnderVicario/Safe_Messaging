@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="login">Hasi saioa</string>
+    <string name="login_username">Erabiltzailea</string>
+    <string name="login_password">Pasahitza</string>
+    <string name="add_username">Erabiltzailea gehitu</string>
+    <string name="send_message">Bidali mezua</string>
+    <string name="register_password">Konfirmatu pasahitza</string>
+    <string name="register">Erregistratu</string>
+    <string name="open_register">Ez duzu konturik?</string>
+    <string name="open_login">Ba al duzu kontu bat?</string>
+</resources>

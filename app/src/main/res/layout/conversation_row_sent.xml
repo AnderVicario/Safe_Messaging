@@ -20,7 +20,7 @@
         android:padding="12sp"
         android:paddingStart="32sp"
         android:paddingEnd="32sp"
-        android:text="ay mi matogo ay mi matogito"
+        android:text="message example"
         android:textColor="@color/onSurface"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"

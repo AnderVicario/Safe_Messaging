@@ -43,7 +43,7 @@
             android:layout_width="wrap_content"
             android:layout_height="28dp"
             android:layout_gravity="center|left"
-            android:text="Matogo"
+            android:text="Contact"
             android:textColor="@color/primary"
             android:textSize="20dp"
             android:textStyle="bold"
