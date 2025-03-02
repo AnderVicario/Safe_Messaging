@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="rounded_corners" parent="">>
+    <style name="rounded_corners" parent="@style/Theme.MyApp">>
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">8dp</item>
     </style>
@@ -8,5 +8,11 @@
         <item name="android:textColor">@color/onSurface</item>
         <item name="android:textSize">16sp</item>
         <item name="android:backgroundTint">@color/surface</item>
+    </style>
+    <style name="AppTheme.NavigationView" parent="@style/Theme.MyApp">
+        <item name="itemIconTint">@color/onBackground</item>
+        <item name="itemTextColor">@color/onBackground</item>
+        <item name="android:background">@color/background</item>
+        <item name="android:layout_width">match_parent</item>
     </style>
 </resources>

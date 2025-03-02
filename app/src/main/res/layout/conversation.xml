@@ -45,7 +45,7 @@
             android:layout_gravity="center|left"
             android:text="Contact"
             android:textColor="@color/primary"
-            android:textSize="20dp"
+            android:textSize="20sp"
             android:textStyle="bold"
             tools:layout_editor_absoluteX="16dp"
             tools:layout_editor_absoluteY="16dp" />

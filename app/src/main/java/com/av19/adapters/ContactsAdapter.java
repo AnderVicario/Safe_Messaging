@@ -2,6 +2,7 @@ package com.av19.adapters;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -84,7 +85,12 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHo
             tv_name.setText(contact.getName());
             tv_last_message.setText(contact.getLastMessagePreview());
             tv_last_message_time.setText(contact.getFormattedLastMessageTime());
-            iv_icon.setImageResource(R.drawable.ic_launcher_background);
+            if (contact.getPhoto() != null) {
+                Bitmap bitmap = android.graphics.BitmapFactory.decodeByteArray(contact.getPhoto(), 0, contact.getPhoto().length);
+                iv_icon.setImageBitmap(bitmap);
+            } else {
+                iv_icon.setImageResource(R.drawable.ic_launcher_background);
+            }
         }
     }
 }

@@ -9,4 +9,10 @@
     <string name="register">Register</string>
     <string name="open_register">Don\'t have an account?</string>
     <string name="open_login">Already have an account?</string>
+    <string name="no_messages">No messages</string>
+    <string name="you">You</string>
+    <string name="navigation_drawer_open">Open Navigation Drawer</string>
+    <string name="navigation_drawer_close">Close Navigation Drawer</string>
+    <string name="nav_header_desc">User Profile Picture</string>
+    <string name="drawer_status_online">Online</string>/>
 </resources>

@@ -2,6 +2,8 @@ package com.av19.ui;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -12,6 +14,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -28,6 +32,8 @@ import com.av19.utils.ApiService;
 import com.av19.utils.RSAEncryptionManager;
 import com.av19.utils.RetrofitClient;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 
 import javax.crypto.SecretKey;
@@ -40,6 +46,9 @@ public class AddContactForm extends AppCompatActivity {
 
     private ApiService apiService;
     private String currentUser;
+    private byte[] contactPhoto = null;
+    private ImageView iv_contact_icon;
+    private ActivityResultLauncher<Intent> pickImageLauncher;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -55,8 +64,30 @@ public class AddContactForm extends AppCompatActivity {
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         window.setStatusBarColor(ContextCompat.getColor(this, R.color.surface));
 
-        ImageView iv_contact_icon = findViewById(R.id.iv_contact_icon);
+        iv_contact_icon = findViewById(R.id.iv_contact_icon);
         iv_contact_icon.setImageResource(R.drawable.ic_launcher_background);
+        iv_contact_icon.setOnClickListener(v -> {
+            // Abrir selector de imágenes utilizando el ActivityResultLauncher
+            Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            pickImageLauncher.launch(intent);
+        });
+
+        // Inicializar el launcher para seleccionar imagen
+        pickImageLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if(result.getResultCode() == Activity.RESULT_OK && result.getData() != null){
+                Uri imageUri = result.getData().getData();
+                try {
+                    Bitmap bitmap = android.provider.MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+                    iv_contact_icon.setImageBitmap(bitmap);
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                    contactPhoto = stream.toByteArray();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
         currentUser = getSharedPreferences("session", MODE_PRIVATE)
                 .getString("auth_token", null);
@@ -165,6 +196,7 @@ public class AddContactForm extends AppCompatActivity {
         Intent resultIntent = new Intent();
         resultIntent.putExtra("new_contact_name", username);
         resultIntent.putExtra("new_public_key", publicKey);
+        resultIntent.putExtra("new_contact_photo", contactPhoto);
         setResult(Activity.RESULT_OK, resultIntent);
         finish();
     }

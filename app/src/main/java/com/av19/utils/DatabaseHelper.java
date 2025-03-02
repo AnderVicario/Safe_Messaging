@@ -135,7 +135,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE contacts (id INTEGER PRIMARY KEY, name TEXT, public_key TEXT)");
+        db.execSQL("CREATE TABLE contacts (id INTEGER PRIMARY KEY, name TEXT, public_key TEXT, photo BLOB)");
         db.execSQL("CREATE TABLE messages (" +
                 "id INTEGER PRIMARY KEY, " +
                 "contact_id INTEGER, " +
@@ -144,8 +144,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 "sent_at TEXT, " +
                 "FOREIGN KEY(contact_id) REFERENCES contacts(id)" +
                 ")");
-
-        // Insertar datos de ejemplo
         insertSampleData(db);
     }
 

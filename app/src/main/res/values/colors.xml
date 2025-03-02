@@ -7,6 +7,7 @@
     <color name="background">#FFFFFF</color>
     <color name="surface">#efefef</color>
     <color name="error">#B00020</color>
+    <color name="transparent">#00000000</color>
 
     <!-- Text colors -->
     <color name="onPrimary">#FFFFFF</color>

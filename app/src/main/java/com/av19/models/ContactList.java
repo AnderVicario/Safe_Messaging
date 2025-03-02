@@ -32,6 +32,7 @@ public class ContactList {
         int contactIdIndex = contactCursor.getColumnIndex("id");
         int contactNameIndex = contactCursor.getColumnIndex("name");
         int contactPublicKeyIndex = contactCursor.getColumnIndex("public_key");
+        int contactPhotoIndex = contactCursor.getColumnIndex("photo");
 
         if (contactIdIndex == -1 || contactNameIndex == -1) {
             Log.e("ContactList", "Column index not found for 'id' or 'name'");
@@ -40,6 +41,7 @@ public class ContactList {
                 int contactId = contactCursor.getInt(contactIdIndex);
                 String contactName = contactCursor.getString(contactNameIndex);
                 String contactPublicKey = contactCursor.getString(contactPublicKeyIndex);
+                byte[] contactPhoto = contactPhotoIndex != -1 ? contactCursor.getBlob(contactPhotoIndex) : null;
 
                 List<Message> messages = new ArrayList<>();
                 Cursor messageCursor = db.rawQuery(
@@ -65,7 +67,7 @@ public class ContactList {
                 messageCursor.close();
 
                 // Aquí se asume que el constructor de Contact ahora acepta una lista de mensajes
-                Contact contact = new Contact(contactId, contactName, contactPublicKey, messages);
+                Contact contact = new Contact(contactId, contactName, contactPublicKey, contactPhoto,messages, context);
                 contacts.add(contact);
             }
         }
@@ -110,18 +112,19 @@ public class ContactList {
         });
     }
 
-    public int addContact(String name, String publicKey) {
+    public int addContact(String name, String publicKey, byte[] photo, Context context) {
         SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
 
         ContentValues contactValues = new ContentValues();
         contactValues.put("name", name);
-        contactValues.put("public_key", publicKey); // Campo requerido
+        contactValues.put("public_key", publicKey);
+        contactValues.put("photo", photo);
 
         long contactId = db.insert("contacts", null, contactValues);
         db.close();
 
         // Usar lista vacía en lugar de null
-        Contact newContact = new Contact((int) contactId, name, publicKey, new ArrayList<>());
+        Contact newContact = new Contact((int) contactId, name, publicKey, photo, new ArrayList<>(), context);
         contacts.add(newContact);
         sortContacts();
 

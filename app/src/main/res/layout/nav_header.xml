@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="176dp"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/surface"
+    android:gravity="bottom"
+    android:orientation="vertical"
+    android:padding="32dp"
+    style="rounded_corners">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/user_profile_image"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:contentDescription="@string/nav_header_desc"
+        app:shapeAppearanceOverlay="@style/rounded_corners"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <TextView
+        android:id="@+id/user_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Username"
+        android:textColor="@color/onSurface"
+        android:textSize="16sp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/user_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/onSurface"
+        android:text="@string/drawer_status_online"/>
+
+</LinearLayout>

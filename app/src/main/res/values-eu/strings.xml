@@ -9,4 +9,10 @@
     <string name="register">Erregistratu</string>
     <string name="open_register">Ez duzu konturik?</string>
     <string name="open_login">Ba al duzu kontu bat?</string>
+    <string name="no_messages">Mezurik ez</string>
+    <string name="you" >Zu</string>
+    <string name="navigation_drawer_open">Ireki nabigazio-panela</string>
+    <string name="navigation_drawer_close">Itxi nabigazio-panela</string>
+    <string name="nav_header_desc">Erabiltzailearen profil irudia</string>
+    <string name="drawer_status_online">Linean</string>
 </resources>
