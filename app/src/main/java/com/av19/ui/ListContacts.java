@@ -53,30 +53,6 @@ public class ListContacts extends AppCompatActivity implements NavigationView.On
         EdgeToEdge.enable(this);
         setContentView(R.layout.list_contacts);
 
-        /*ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.drawer_layout), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-
-            // Status Bar: Aplicar padding superior al Toolbar
-            Toolbar toolbar = findViewById(R.id.toolbar);
-            toolbar.setPadding(
-                    toolbar.getPaddingLeft(),
-                    systemBars.top,  // Insets superiores (status bar)
-                    toolbar.getPaddingRight(),
-                    toolbar.getPaddingBottom()
-            );
-
-            // Navigation Bar: Aplicar padding inferior al RecyclerView
-            ConstraintLayout recyclerView = findViewById(R.id.main);
-            recyclerView.setPadding(
-                    recyclerView.getPaddingLeft(),
-                    recyclerView.getPaddingTop(),
-                    recyclerView.getPaddingRight(),
-                    systemBars.bottom  // Insets inferiores (navigation bar)
-            );
-
-            return insets;
-        });*/
-
         setUpRecyclerView();
 
         setupNavigationDrawer();
