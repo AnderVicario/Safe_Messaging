@@ -35,6 +35,7 @@ dependencies {
     implementation(libs.sqlite)
     implementation(libs.android.database.sqlcipher)
     implementation(libs.security.crypto)
+    implementation(libs.bcprov.jdk18on.v176)
     implementation(libs.appcompat)
     implementation(libs.logging.interceptor)
     implementation(libs.material)

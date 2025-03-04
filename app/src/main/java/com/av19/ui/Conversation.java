@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-public class Conversation extends AppCompatActivity {
+public class Conversation extends BaseLocaleActivity {
 
     // Componentes de interfaz de usuario
     private TextView profileName;
