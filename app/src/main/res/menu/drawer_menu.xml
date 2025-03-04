@@ -3,24 +3,24 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <item android:title="Configuración">
+    <item android:title="@string/drawer_item_configuration">
         <menu>
             <item
                 android:id="@+id/nav_theme"
                 android:icon="@drawable/ic_theme"
-                android:title="Tema" />
+                android:title="@string/drawer_item_theme" />
             <item
                 android:id="@+id/nav_language"
                 android:icon="@drawable/ic_language"
-                android:title="Idioma" />
+                android:title="@string/drawer_item_language" />
         </menu>
     </item>
-    <item android:title="Otros">
+    <item android:title="@string/drawer_item_other">
         <menu>
             <item
                 android:id="@+id/nav_about"
                 android:icon="@drawable/ic_info"
-                android:title="Acerca de" />
+                android:title="@string/drawer_item_about" />
         </menu>
     </item>
 </menu>

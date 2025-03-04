@@ -7,12 +7,15 @@
     <style name="menu_theme" parent="@style/Theme.MyApp">
         <item name="android:textColor">@color/onSurface</item>
         <item name="android:textSize">16sp</item>
-        <item name="android:backgroundTint">@color/surface</item>
+        <item name="android:backgroundTint">@color/background</item>
     </style>
     <style name="AppTheme.NavigationView" parent="@style/Theme.MyApp">
         <item name="itemIconTint">@color/onBackground</item>
         <item name="itemTextColor">@color/onBackground</item>
         <item name="android:background">@color/background</item>
         <item name="android:layout_width">match_parent</item>
+    </style>
+    <style name="RoundedDialog" parent="">
+        <item name="android:background">@color/surface</item>
     </style>
 </resources>

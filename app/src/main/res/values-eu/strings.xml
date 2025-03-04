@@ -15,4 +15,14 @@
     <string name="navigation_drawer_close">Itxi nabigazio-panela</string>
     <string name="nav_header_desc">Erabiltzailearen profil irudia</string>
     <string name="drawer_status_online">Linean</string>
+    <string name="drawer_item_configuration">Aukerak</string>
+    <string name="drawer_item_theme">Gaia</string>
+    <string name="drawer_item_language">Hizkuntza</string>
+    <string name="drawer_item_other">Besteak</string>
+    <string name="drawer_item_about">Informazioa</string>
+    <string name="about_title">Aplikazioari buruz</string>
+    <string name="about_message">Mezularitza-aplikazio zifratua, zure elkarrizketak segurtasun eta pribatutasunarekin babesteko.</string>
+    <string name="default_theme">Lehenetsia</string>
+    <string name="dark_theme">Gaua</string>
+    <string name="light_theme">Eguna</string>
 </resources>

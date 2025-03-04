@@ -15,4 +15,14 @@
     <string name="navigation_drawer_close">Cerrar panel de navegación</string>
     <string name="nav_header_desc">Imagen de perfil del usuario</string>
     <string name="drawer_status_online">En línea</string>
+    <string name="drawer_item_configuration">Configuración</string>
+    <string name="drawer_item_theme">Tema</string>
+    <string name="drawer_item_language">Idioma</string>
+    <string name="drawer_item_other">Otros</string>
+    <string name="drawer_item_about">Acerca de</string>
+    <string name="about_title">Acerca de la aplicación</string>
+    <string name="about_message">Una aplicación de mensajería cifrada que protege tus conversaciones con seguridad y privacidad.</string>
+    <string name="default_theme">Por defecto</string>
+    <string name="dark_theme">Noche</string>
+    <string name="light_theme">Día</string>
 </resources>

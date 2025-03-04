@@ -6,12 +6,18 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 @SuppressLint("CustomSplashScreen")
 public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Cargar el tema guardado desde SharedPreferences
+        SharedPreferences settingsPrefs = getSharedPreferences("settings", MODE_PRIVATE);
+        int themeMode = settingsPrefs.getInt("theme", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        AppCompatDelegate.setDefaultNightMode(themeMode);
 
         SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
         String token = prefs.getString("auth_token", null);

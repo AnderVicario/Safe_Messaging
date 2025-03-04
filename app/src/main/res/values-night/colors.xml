@@ -11,7 +11,7 @@
 
 
     <!-- Text colors -->
-    <color name="onPrimary">#000000</color>
+    <color name="onPrimary">#262525</color>
     <color name="onSecondary">#FFFFFF</color>
     <color name="onBackground">#FFFFFF</color>
     <color name="onSurface">#FFFFFF</color>
