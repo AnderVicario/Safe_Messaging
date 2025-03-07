@@ -52,7 +52,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-public class Conversation extends AppCompatActivity {
+public class Conversation extends BaseLocaleActivity {
 
     // Constantes
     private static final String TAG = "Conversation";

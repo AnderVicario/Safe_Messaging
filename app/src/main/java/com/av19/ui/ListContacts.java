@@ -47,7 +47,7 @@ import com.google.android.material.navigation.NavigationView;
 
 import java.util.Locale;
 
-public class ListContacts extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class ListContacts extends BaseLocaleActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private ContactList contactList;
     private ContactsAdapter contactsAdapter;
