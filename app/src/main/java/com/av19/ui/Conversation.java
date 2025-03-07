@@ -494,7 +494,7 @@ public class Conversation extends BaseLocaleActivity {
     }
 
     /**
-     * Procesa y almacena nuevos mensajes recibidos de la API.
+     * Procesa y almacena nuevos mensajes recibidos de la API web.
      * Guarda todos los mensajes en la base de datos, pero solo actualiza
      * la UI si hay mensajes nuevos para la conversación actual.
      */
