@@ -40,7 +40,7 @@ public class Contact {
             if (text.length() > 30) {
                 text = text.substring(0, 30) + "...";
             }
-            return (!last.isSender() ? context.getString(R.string.you) + ": " : "") + text;
+            return (!last.getIsSender() ? context.getString(R.string.you) + ": " : "") + text;
         }
         return context.getString(R.string.no_messages);
     }

@@ -30,7 +30,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public int getItemViewType(int position) {
-        return !messages.get(position).isSender() ? TYPE_SENT : TYPE_RECEIVED;
+        return !messages.get(position).getIsSender() ? TYPE_SENT : TYPE_RECEIVED;
     }
 
     @NonNull

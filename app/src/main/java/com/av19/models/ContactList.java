@@ -45,21 +45,25 @@ public class ContactList {
 
                 List<Message> messages = new ArrayList<>();
                 Cursor messageCursor = db.rawQuery(
-                        "SELECT message, is_sender, sent_at FROM messages WHERE contact_id = ?",
+                        "SELECT * FROM messages WHERE contact_id = ?",
                         new String[]{String.valueOf(contactId)}
                 );
                 while (messageCursor.moveToNext()) {
+                    int idTextIndex = messageCursor.getColumnIndex("id");
+                    int contactIdTextIndex = messageCursor.getColumnIndex("contact_id");
                     int messageTextIndex = messageCursor.getColumnIndex("message");
                     int sentAtIndex = messageCursor.getColumnIndex("sent_at");
                     int isSenderIndex = messageCursor.getColumnIndex("is_sender");
 
-                    if (messageTextIndex != -1 && sentAtIndex != -1 && isSenderIndex != -1) {
+                    if (idTextIndex !=1 && contactIdTextIndex != -1 && messageTextIndex != -1 && sentAtIndex != -1 && isSenderIndex != -1) {
+                        int messageId = messageCursor.getInt(idTextIndex);
+                        int messageContactId = messageCursor.getInt(contactIdTextIndex);
                         String messageText = messageCursor.getString(messageTextIndex);
                         boolean isSender = messageCursor.getInt(isSenderIndex) == 1; // Convertir a boolean
                         String sentAtString = messageCursor.getString(sentAtIndex);
 
                         Date sentAtDate = convertStringToDate(sentAtString);
-                        messages.add(new Message(messageText, isSender, sentAtDate)); // Asumiendo nuevo constructor
+                        messages.add(new Message(messageId, messageContactId, messageText, isSender, sentAtDate)); // Asumiendo nuevo constructor
                     } else {
                         Log.e("ContactList", "Column index not found in messages for 'message' or 'sent_at'");
                     }

@@ -26,4 +26,6 @@
     <string name="default_theme">Default</string>
     <string name="dark_theme">Dark</string>
     <string name="light_theme">Light</string>
+    <string name="export_chat">Export</string>
+    <string name="import_chat">Import</string>
 </resources>
