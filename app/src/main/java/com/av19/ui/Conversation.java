@@ -41,6 +41,7 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -153,14 +154,17 @@ public class Conversation extends BaseLocaleActivity {
         } else if (id == R.id.action_import) {
             importChat();
             return true;
+        } else if (id == R.id.action_delete) {
+            deleteChat();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    // ---------------------------------
-    // --- Importación y Exportación ---
-    // ---------------------------------
+    // -----------------------------------------
+    // --- Importación, Exportación y Vaciar ---
+    // -----------------------------------------
 
     private void exportChat() {
         if (!isExternalStorageWritable()) {
@@ -221,9 +225,10 @@ public class Conversation extends BaseLocaleActivity {
             DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
             SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
 
-            // Comenzar transacción para operaciones masivas
-            db.beginTransaction();
             try {
+                // Comenzar transacción para operaciones masivas
+                db.beginTransaction();
+
                 for (int i = 0; i < jsonArray.length(); i++) {
                     JSONObject jsonMessage = jsonArray.getJSONObject(i);
                     int id = jsonMessage.getInt("id");
@@ -243,18 +248,27 @@ public class Conversation extends BaseLocaleActivity {
 
                     if (!messageExists) {
                         // Almacenar el mensaje en la base de datos si no existe
-                        storeMessageInDatabase(Integer.parseInt(contactId), isSender, message, timestamp);
+                        ContentValues values = new ContentValues();
+                        values.put("contact_id", contactId);
+                        values.put("is_sender", isSender ? 1 : 0);
+                        values.put("message", message);
+                        values.put("sent_at", timestamp);
+
+                        db.insert("messages", null, values);
                     }
                 }
+
                 db.setTransactionSuccessful();
                 Log.d(TAG, "Conversación importada correctamente");
-                refreshMessagesUI(); // Actualizar UI después de importar
             } finally {
+                // Asegurarse de que la transacción finalice y la base de datos se cierre
                 db.endTransaction();
                 db.close();
             }
+
+            refreshMessagesUI();
         } catch (IOException | JSONException e) {
-            Log.e(TAG, "Error al importar conversación", e);
+            Log.e(TAG, "Error al importar la conversación", e);
         }
     }
 
@@ -266,6 +280,14 @@ public class Conversation extends BaseLocaleActivity {
         String state = Environment.getExternalStorageState();
         return Environment.MEDIA_MOUNTED.equals(state) ||
                 Environment.MEDIA_MOUNTED_READ_ONLY.equals(state);
+    }
+
+    private void deleteChat(){
+        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
+        SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
+        db.delete("messages", "contact_id = ?", new String[]{contactId});
+        db.close();
+        refreshMessagesUI();
     }
 
     // -------------------------

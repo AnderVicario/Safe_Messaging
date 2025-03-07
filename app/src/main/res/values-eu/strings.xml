@@ -25,4 +25,7 @@
     <string name="default_theme">Lehenetsia</string>
     <string name="dark_theme">Gaua</string>
     <string name="light_theme">Eguna</string>
+    <string name="export_chat">Esportatu txata</string>
+    <string name="import_chat">Inportatu txata</string>
+    <string name="action_delete">Hustu txata</string>
 </resources>

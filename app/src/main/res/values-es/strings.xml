@@ -25,4 +25,7 @@
     <string name="default_theme">Por defecto</string>
     <string name="dark_theme">Noche</string>
     <string name="light_theme">Día</string>
+    <string name="export_chat">Exportar chat</string>
+    <string name="import_chat">Importar chat</string>
+    <string name="action_delete">Vaciar chat</string>
 </resources>
