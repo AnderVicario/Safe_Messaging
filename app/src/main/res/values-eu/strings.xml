@@ -34,4 +34,10 @@
     <string name="snackbar_warning_password_mismatch">Pasahitzak ez dira berdinak.</string>
     <string name="snackbar_error_username_exists">Erabiltzaile izena dagoeneko erregistratuta dago.</string>
     <string name="snackbar_success_register">Arrakastaz erregistratuta.</string>
+    <string name="just_now">Orain</string>
+    <string name="minute">m</string>
+    <string name="hour">o</string>
+    <string name="day">e</string>
+    <string name="day_format">yy/MM/dd</string>
+    <string name="snackbar_warning_empty_user">Sartu erabiltzaile izena.</string>
 </resources>

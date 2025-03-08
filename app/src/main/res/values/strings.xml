@@ -35,4 +35,10 @@
     <string name="snackbar_warning_password_mismatch">Password mismatch.</string>
     <string name="snackbar_error_username_exists">Username already registered.</string>
     <string name="snackbar_success_register">Successful registration.</string>
+    <string name="just_now">Now</string>
+    <string name="minute">m</string>
+    <string name="hour">h</string>
+    <string name="day">d</string>
+    <string name="day_format">dd/MM/yy</string>
+    <string name="snackbar_warning_empty_user">Ingress username.</string>
 </resources>

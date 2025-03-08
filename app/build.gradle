@@ -1,0 +1,46 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace "com.av19"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.av19"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "beta1.0-noAPI"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation libs.sqlite
+    implementation libs.android.database.sqlcipher
+    implementation libs.security.crypto
+    implementation libs.bcprov.jdk18on.v176
+    implementation libs.appcompat
+    implementation libs.logging.interceptor
+    implementation libs.material
+    implementation libs.activity
+    implementation libs.constraintlayout
+    implementation libs.retrofit
+    implementation libs.converter.gson
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+}

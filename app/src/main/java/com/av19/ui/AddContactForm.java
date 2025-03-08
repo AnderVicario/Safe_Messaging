@@ -1,6 +1,7 @@
 package com.av19.ui;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -8,6 +9,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,6 +23,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.av19.R;
+import com.av19.utils.SnackbarUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -82,8 +85,15 @@ public class AddContactForm extends BaseLocaleActivity {
         TextView et_name = findViewById(R.id.et_name);
         String username = et_name.getText().toString().trim();
 
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+
         if (username.isEmpty()) {
-            Toast.makeText(this, "Ingrese un nombre de usuario", Toast.LENGTH_SHORT).show();
+            SnackbarUtils.showWarning(
+                    findViewById(android.R.id.content), this, getString(R.string.snackbar_warning_empty_user)
+            );
             return;
         }
 

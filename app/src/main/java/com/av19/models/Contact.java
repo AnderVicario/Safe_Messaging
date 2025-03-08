@@ -60,18 +60,16 @@ public class Contact {
 
     private String formatTimeDifference(Date messageDate) {
         long diffMillis = System.currentTimeMillis() - messageDate.getTime();
-
-        // Usar TimeUnit para mejor conversión
         long minutes = TimeUnit.MILLISECONDS.toMinutes(diffMillis);
         long hours = TimeUnit.MILLISECONDS.toHours(diffMillis);
         long days = TimeUnit.MILLISECONDS.toDays(diffMillis);
 
-        if (minutes < 1) return "Ahora";
-        if (minutes < 60) return minutes + "m";
-        if (hours < 24) return hours + "h";
-        if (days < 7) return days + "d";
+        if (minutes < 1) return context.getString(R.string.just_now);
+        if (minutes < 60) return minutes + context.getString(R.string.minute);
+        if (hours < 24) return hours + context.getString(R.string.hour);
+        if (days < 7) return days + context.getString(R.string.day);
 
         // Formato para fechas mayores a 1 semana
-        return new SimpleDateFormat("dd/MM/yy", Locale.getDefault()).format(messageDate);
+        return new SimpleDateFormat(context.getString(R.string.day_format), Locale.getDefault()).format(messageDate);
     }
 }

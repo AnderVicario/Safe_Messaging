@@ -161,13 +161,52 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         contactValues.put("public_key", "clave_publica_dummy_12345");
         long contactId = db.insert("contacts", null, contactValues);
 
-        // Insertar mensaje de prueba asociado al contacto
-        ContentValues messageValues = new ContentValues();
-        messageValues.put("contact_id", contactId);
-        messageValues.put("is_sender", 0);
-        messageValues.put("message", "¡Hola! Este es un mensaje de prueba");
-        messageValues.put("sent_at", "2025-02-18T20:16:51.143Z");
-        db.insert("messages", null, messageValues);
-        // Otros inserts...
+        // Mensaje 1: mensaje del contacto
+        ContentValues message1 = new ContentValues();
+        message1.put("contact_id", contactId);
+        message1.put("is_sender", 0);  // Mensaje enviado por el contacto
+        message1.put("message", "¡Hola! ¿Cómo estás?");
+        message1.put("sent_at", "2025-02-18T20:16:51.143Z");
+        db.insert("messages", null, message1);
+
+        // Mensaje 2: respuesta del usuario
+        ContentValues message2 = new ContentValues();
+        message2.put("contact_id", contactId);
+        message2.put("is_sender", 1);  // Mensaje enviado por el usuario
+        message2.put("message", "Hola, estoy bien, gracias. ¿Y tú?");
+        message2.put("sent_at", "2025-02-18T20:17:30.000Z");
+        db.insert("messages", null, message2);
+
+        // Mensaje 3: mensaje del contacto
+        ContentValues message3 = new ContentValues();
+        message3.put("contact_id", contactId);
+        message3.put("is_sender", 0);
+        message3.put("message", "Muy bien, gracias por preguntar. ¿Qué has hecho hoy?");
+        message3.put("sent_at", "2025-02-18T20:18:15.000Z");
+        db.insert("messages", null, message3);
+
+        // Mensaje 4: respuesta del usuario
+        ContentValues message4 = new ContentValues();
+        message4.put("contact_id", contactId);
+        message4.put("is_sender", 1);
+        message4.put("message", "He estado trabajando en un proyecto. ¿Y tú?");
+        message4.put("sent_at", "2025-02-18T20:19:05.000Z");
+        db.insert("messages", null, message4);
+
+        // Mensaje 5: mensaje del contacto
+        ContentValues message5 = new ContentValues();
+        message5.put("contact_id", contactId);
+        message5.put("is_sender", 0);
+        message5.put("message", "He salido a dar un paseo y luego cené con unos amigos.");
+        message5.put("sent_at", "2025-02-18T20:20:10.000Z");
+        db.insert("messages", null, message5);
+
+        // Mensaje 6: respuesta del usuario
+        ContentValues message6 = new ContentValues();
+        message6.put("contact_id", contactId);
+        message6.put("is_sender", 1);
+        message6.put("message", "Suena genial. Me encantaría unirme la próxima vez.");
+        message6.put("sent_at", "2025-02-18T20:21:45.000Z");
+        db.insert("messages", null, message6);
     }
 }
