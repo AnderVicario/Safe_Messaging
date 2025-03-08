@@ -31,6 +31,8 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+
+import com.av19.utils.SnackbarUtils;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -66,6 +68,14 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
         EdgeToEdge.enable(this);
         setContentView(R.layout.list_contacts);
 
+        if (getIntent().getBooleanExtra("login_success", false)) {
+            SnackbarUtils.showSuccess(
+                    findViewById(android.R.id.content),
+                    this,
+                    getString(R.string.snackbar_success_login)
+            );
+        }
+
         currentUser = getSharedPreferences("session", MODE_PRIVATE)
                 .getString("auth_token", null);
 
@@ -85,6 +95,18 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
                 }
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        refreshMessagesUI();
+    }
+
+    private void refreshMessagesUI() {
+        contactList.reloadContacts(this);
+        contactsAdapter.notifyDataSetChanged();
     }
 
     private void setupNavigationDrawer() {
@@ -252,18 +274,12 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
 
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this, R.style.RoundedDialog);
         builder.setTitle(R.string.about_title)
-                .setMessage(getString(R.string.app_name) + " v" + versionName + "\n\n" +
+                .setMessage(getString(R.string.app_name) + " v: " + versionName + "\n\n" +
                         getString(R.string.about_message) + "\n\n" +
                         getString(R.string.about_copyright))
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> dialog.dismiss())
                 .setIcon(R.mipmap.ic_logo)
                 .show();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return true;
     }
 
     private void setUpRecyclerView() {
@@ -286,10 +302,9 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
                     Intent data = result.getData();
                     if (data != null) {
                         String newContactName = data.getStringExtra("new_contact_name");
-                        String newPublicKey = data.getStringExtra("new_public_key");
                         byte[] newContactPhoto = data.getByteArrayExtra("new_contact_photo");
-                        if (newContactName != null && newPublicKey != null) {
-                            int index = ContactList.getInstance(this).addContact(newContactName, newPublicKey, newContactPhoto,this);
+                        if (newContactName != null) {
+                            int index = ContactList.getInstance(this).addContact(newContactName, newContactPhoto,this);
                             contactsAdapter.notifyItemInserted(index);
                         }
                     }

@@ -19,6 +19,7 @@ public class SplashActivity extends BaseLocaleActivity {
         int themeMode = settingsPrefs.getInt("theme", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
         AppCompatDelegate.setDefaultNightMode(themeMode);
 
+        // Cargar al sesión guardada desde SharedPreferences
         SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
         String token = prefs.getString("auth_token", null);
 

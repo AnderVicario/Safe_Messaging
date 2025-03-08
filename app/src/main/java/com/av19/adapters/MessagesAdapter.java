@@ -19,8 +19,8 @@ import java.util.TimeZone;
 
 public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private static final int TYPE_SENT = 1;
-    private static final int TYPE_RECEIVED = 2;
+    private static final int VIEW_TYPE_SENT_BY_USER = 1;
+    private static final int VIEW_TYPE_RECEIVED_FROM_OTHER = 2;
 
     private final List<Message> messages;
 
@@ -30,7 +30,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     @Override
     public int getItemViewType(int position) {
-        return !messages.get(position).getIsSender() ? TYPE_SENT : TYPE_RECEIVED;
+        return messages.get(position).getIsSender() ? VIEW_TYPE_SENT_BY_USER : VIEW_TYPE_RECEIVED_FROM_OTHER;
     }
 
     @NonNull
@@ -38,7 +38,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
 
-        if (viewType == TYPE_SENT) {
+        if (viewType == VIEW_TYPE_SENT_BY_USER) {
             View view = inflater.inflate(R.layout.conversation_row_sent, parent, false);
             return new SentMessageHolder(view);
         } else {
@@ -51,7 +51,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         Message message = messages.get(position);
 
-        if (holder.getItemViewType() == TYPE_SENT) {
+        if (holder.getItemViewType() == VIEW_TYPE_SENT_BY_USER) {
             ((SentMessageHolder) holder).bind(message);
         } else {
             ((ReceivedMessageHolder) holder).bind(message);

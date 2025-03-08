@@ -6,7 +6,8 @@
     <color name="secondaryVariant">#BCCCE0</color>
     <color name="background">#312f2f</color>
     <color name="surface">#262525</color>
-    <color name="error">#CF6679</color>
+    <color name="error">#ca2934</color>
+    <color name="warning">#f7952a</color>
     <color name="transparent">#00000000</color>
 
 

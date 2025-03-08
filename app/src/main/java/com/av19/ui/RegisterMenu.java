@@ -1,36 +1,29 @@
 package com.av19.ui;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.av19.R;
-import com.av19.models.api.ApiResponse;
-import com.av19.models.api.PublicKeyResponse;
-import com.av19.models.api.UserCreate;
-import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
-import com.av19.utils.RSAEncryptionManager;
-import com.av19.utils.RetrofitClient;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import com.av19.utils.SnackbarUtils;
 
 public class RegisterMenu extends BaseLocaleActivity {
 
@@ -60,7 +53,6 @@ public class RegisterMenu extends BaseLocaleActivity {
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         window.setStatusBarColor(ContextCompat.getColor(this, R.color.surface));
 
-
         EditText passwordInput1 = findViewById(R.id.et_register_password_1);
         EditText passwordInput2 = findViewById(R.id.et_register_password_2);
         EditText usernameInput = findViewById(R.id.et_register_username);
@@ -77,9 +69,9 @@ public class RegisterMenu extends BaseLocaleActivity {
 
             @Override
             public void afterTextChanged(Editable editable) {
-
             }
         });
+
         passwordInput1.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -93,9 +85,9 @@ public class RegisterMenu extends BaseLocaleActivity {
 
             @Override
             public void afterTextChanged(Editable editable) {
-
             }
         });
+
         passwordInput2.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -109,7 +101,6 @@ public class RegisterMenu extends BaseLocaleActivity {
 
             @Override
             public void afterTextChanged(Editable editable) {
-
             }
         });
 
@@ -129,69 +120,61 @@ public class RegisterMenu extends BaseLocaleActivity {
         String password1 = passwordInput1.getText().toString();
         String password2 = passwordInput2.getText().toString();
 
-        // Comprobar si las contraseñas coindicen
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+
+        // Comprobar si las contraseñas coinciden
         if (!password1.equals(password2)) {
-            Toast.makeText(getApplicationContext(), "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show();
+            SnackbarUtils.showWarning(
+                    findViewById(android.R.id.content), this, getString(R.string.snackbar_warning_password_mismatch)
+            );
             passwordInput1.setTextColor(ContextCompat.getColor(RegisterMenu.this, R.color.error));
             passwordInput2.setTextColor(ContextCompat.getColor(RegisterMenu.this, R.color.error));
             return;
         }
 
-        // 1. Llamada a la API para comprobar si existe el usuario
-        ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
+        // Simulación de verificación de usuario existente
+        if (username.isEmpty() || password1.isEmpty()) {
+            SnackbarUtils.showWarning(
+                    findViewById(android.R.id.content), this, getString(R.string.snackbar_warning_empty_fields)
+            );
+            return;
+        }
 
-        // Realizar la llamada al endpoint para obtener la clave pública de un usuario
-        Call<PublicKeyResponse> call = apiService.getPublicKey(username);
-        call.enqueue(new Callback<PublicKeyResponse>() {
-            @Override
-            public void onResponse(Call<PublicKeyResponse> call, Response<PublicKeyResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    Toast.makeText(getApplicationContext(), "Ya existe un usuario con ese nombre.", Toast.LENGTH_SHORT).show();
-                } else {
-                    // Crear par de llaves
-                    String publicKey = null;
-                    try{
-                        publicKey = RSAEncryptionManager.getInstance(Boolean.TRUE, username).publicKeyString;
-                    } catch (Exception e){
-                        e.printStackTrace();
-                    }
+        if (!isValidCredentials(username)) {
+            SnackbarUtils.showError(
+                    findViewById(android.R.id.content), this, getString(R.string.snackbar_error_username_exists)
+            );
+            usernameInput.setTextColor(ContextCompat.getColor(RegisterMenu.this, R.color.error));
+            return;
+        }
 
-                    // 2. Llamada a la API para registrar el usuario
-                    ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
-                    UserCreate userCreateData = new UserCreate(username, password1, publicKey);
+        // Simulación de registro exitoso
+        SharedPreferences userPrefs = getSharedPreferences("registered_users", MODE_PRIVATE);
+        userPrefs.edit().putString(username, password1).apply();
 
-                    // Realizar la llamada al endpoint de register
-                    Call<ApiResponse> registerCall = apiService.registerUser(userCreateData);
-                    registerCall.enqueue(new Callback<ApiResponse>() {
-                        @Override
-                        public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
-                            if (response.isSuccessful() && response.body() != null) {
-                                ApiResponse apiResponse = response.body();
+        SnackbarUtils.showSuccess(
+                findViewById(android.R.id.content), this, getString(R.string.snackbar_success_register)
+        );
 
-                                SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
-                                prefs.edit().putString("auth_token", username).apply();
+        Intent intent = new Intent(RegisterMenu.this, LoginMenu.class);
+        intent.putExtra("register_success", true);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+        finish();
+    }
 
-                                DatabaseHelper.setPassword(RegisterMenu.this, password1);
+    private boolean isValidCredentials(String username) {
+        SharedPreferences userPrefs = getSharedPreferences("registered_users", MODE_PRIVATE);
+        String storedPassword = userPrefs.getString(username, null);
 
-                                Toast.makeText(getApplicationContext(), "Register exitoso: " + apiResponse.getMessage(), Toast.LENGTH_SHORT).show();
-                                Intent intent = new Intent(RegisterMenu.this, ListContacts.class);
-                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                startActivity(intent);
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(Call<ApiResponse> call, Throwable t) {
-                            Toast.makeText(getApplicationContext(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-            }
-
-            @Override
-            public void onFailure(Call<PublicKeyResponse> call, Throwable t) {
-                Toast.makeText(getApplicationContext(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
+        if (storedPassword != null) {
+            return false;
+        } else {
+            return true;
+        }
     }
 }

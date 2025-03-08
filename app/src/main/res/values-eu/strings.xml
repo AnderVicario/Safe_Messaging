@@ -28,4 +28,10 @@
     <string name="export_chat">Esportatu txata</string>
     <string name="import_chat">Inportatu txata</string>
     <string name="action_delete">Hustu txata</string>
+    <string name="snackbar_warning_empty_fields">Erabiltzaile izena eta pasahitza ipini.</string>
+    <string name="snackbar_success_login">Arrakastaz saioa hasi da.</string>
+    <string name="snackbar_error_login">Kredentzial baliogabeak.</string>
+    <string name="snackbar_warning_password_mismatch">Pasahitzak ez dira berdinak.</string>
+    <string name="snackbar_error_username_exists">Erabiltzaile izena dagoeneko erregistratuta dago.</string>
+    <string name="snackbar_success_register">Arrakastaz erregistratuta.</string>
 </resources>

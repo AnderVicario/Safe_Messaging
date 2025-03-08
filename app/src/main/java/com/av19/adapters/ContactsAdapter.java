@@ -63,10 +63,8 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHo
             tv_last_message_time = itemView.findViewById(R.id.tv_last_message_time);
             iv_icon = itemView.findViewById(R.id.iv_icon);
             cardView = itemView.findViewById(R.id.card_view);
-            Log.d("MiTag", itemView.toString());
 
             cardView.setOnClickListener(view -> {
-                Log.d("MiTag", "Has clicado en un contacto");
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION) {
                     Contact contact = contactList.getContacts().get(position);
@@ -75,7 +73,6 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHo
                     Intent intent = new Intent(context, Conversation.class);
                     intent.putExtra("contact_id", String.valueOf(contact.getId()));
                     intent.putExtra("contact_name", contact.getName());
-                    intent.putExtra("contact_public_key", contact.getPublicKey());
                     context.startActivity(intent);
                 }
             });

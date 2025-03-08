@@ -13,15 +13,13 @@ import java.util.concurrent.TimeUnit;
 public class Contact {
     private int id;
     private String name;
-    private String publicKey;
     private byte[] photo;
     private List<Message> messages;
     private Context context;
 
-    public Contact(int id, String name, String publicKey, byte[] photo, List<Message> messages, Context context) {
+    public Contact(int id, String name, byte[] photo, List<Message> messages, Context context) {
         this.id = id;
         this.name = name;
-        this.publicKey = publicKey;
         this.photo = photo;
         this.messages = messages;
         this.context = context;
@@ -29,7 +27,6 @@ public class Contact {
 
     public int getId() { return id; }
     public String getName() { return name; }
-    public String getPublicKey() { return publicKey; }
     public byte[] getPhoto() { return photo; }
     public List<Message> getMessages() { return messages; }
 
@@ -40,7 +37,7 @@ public class Contact {
             if (text.length() > 30) {
                 text = text.substring(0, 30) + "...";
             }
-            return (!last.getIsSender() ? context.getString(R.string.you) + ": " : "") + text;
+            return (last.getIsSender() ? context.getString(R.string.you) + ": " : "") + text;
         }
         return context.getString(R.string.no_messages);
     }

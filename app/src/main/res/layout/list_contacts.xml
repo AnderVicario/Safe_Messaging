@@ -26,7 +26,6 @@
             android:minHeight="?attr/actionBarSize"
             android:theme="@style/Theme.MyApp"
             android:fitsSystemWindows="true"
-            app:popupTheme="@style/menu_theme"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"

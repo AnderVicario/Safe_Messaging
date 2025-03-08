@@ -164,7 +164,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // Insertar mensaje de prueba asociado al contacto
         ContentValues messageValues = new ContentValues();
         messageValues.put("contact_id", contactId);
-        messageValues.put("is_sender", 1);
+        messageValues.put("is_sender", 0);
         messageValues.put("message", "¡Hola! Este es un mensaje de prueba");
         messageValues.put("sent_at", "2025-02-18T20:16:51.143Z");
         db.insert("messages", null, messageValues);

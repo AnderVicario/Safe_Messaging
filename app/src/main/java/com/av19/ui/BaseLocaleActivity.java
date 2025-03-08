@@ -11,6 +11,7 @@ import java.util.Locale;
 public class BaseLocaleActivity extends AppCompatActivity {
     @Override
     protected void attachBaseContext(Context newBase) {
+        // Cargar idioma
         SharedPreferences prefs = newBase.getSharedPreferences("settings", Context.MODE_PRIVATE);
         String langCode = prefs.getString("lang", "es");
         Locale newLocale = new Locale(langCode);

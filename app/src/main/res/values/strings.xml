@@ -29,4 +29,10 @@
     <string name="export_chat">Export Chat</string>
     <string name="import_chat">Import Chat</string>
     <string name="action_delete">Clear Chat</string>
+    <string name="snackbar_warning_empty_fields">Username and Password required.</string>
+    <string name="snackbar_success_login">Successful login.</string>
+    <string name="snackbar_error_login">Invalid credentials.</string>
+    <string name="snackbar_warning_password_mismatch">Password mismatch.</string>
+    <string name="snackbar_error_username_exists">Username already registered.</string>
+    <string name="snackbar_success_register">Successful registration.</string>
 </resources>

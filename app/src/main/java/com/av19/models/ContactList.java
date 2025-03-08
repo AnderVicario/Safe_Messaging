@@ -21,17 +21,21 @@ public class ContactList {
     private static ContactList myContactList;
     private static List<Contact> contacts = new ArrayList<>();
     private DatabaseHelper dbHelper;
-    private SQLiteDatabase db;
 
     private ContactList(Context context) {
         this.dbHelper = DatabaseHelper.getInstance(context);
-        this.db = dbHelper.getEncryptedWritableDatabase();
+        // Carga inicial de contactos
+        loadContacts(context);
+    }
 
-        // Cargar contactos desde la base de datos
+    // Método encargado de cargar y actualizar la lista de contactos
+    private void loadContacts(Context context) {
+        contacts.clear();
+        SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
+
         Cursor contactCursor = db.rawQuery("SELECT * FROM contacts", null);
         int contactIdIndex = contactCursor.getColumnIndex("id");
         int contactNameIndex = contactCursor.getColumnIndex("name");
-        int contactPublicKeyIndex = contactCursor.getColumnIndex("public_key");
         int contactPhotoIndex = contactCursor.getColumnIndex("photo");
 
         if (contactIdIndex == -1 || contactNameIndex == -1) {
@@ -40,39 +44,13 @@ public class ContactList {
             while (contactCursor.moveToNext()) {
                 int contactId = contactCursor.getInt(contactIdIndex);
                 String contactName = contactCursor.getString(contactNameIndex);
-                String contactPublicKey = contactCursor.getString(contactPublicKeyIndex);
                 byte[] contactPhoto = contactPhotoIndex != -1 ? contactCursor.getBlob(contactPhotoIndex) : null;
 
-                List<Message> messages = new ArrayList<>();
-                Cursor messageCursor = db.rawQuery(
-                        "SELECT * FROM messages WHERE contact_id = ?",
-                        new String[]{String.valueOf(contactId)}
-                );
-                while (messageCursor.moveToNext()) {
-                    int idTextIndex = messageCursor.getColumnIndex("id");
-                    int contactIdTextIndex = messageCursor.getColumnIndex("contact_id");
-                    int messageTextIndex = messageCursor.getColumnIndex("message");
-                    int sentAtIndex = messageCursor.getColumnIndex("sent_at");
-                    int isSenderIndex = messageCursor.getColumnIndex("is_sender");
+                // Cargar mensajes para el contacto actual
+                List<Message> messages = loadMessagesForContact(db, contactId);
 
-                    if (idTextIndex !=1 && contactIdTextIndex != -1 && messageTextIndex != -1 && sentAtIndex != -1 && isSenderIndex != -1) {
-                        int messageId = messageCursor.getInt(idTextIndex);
-                        int messageContactId = messageCursor.getInt(contactIdTextIndex);
-                        String messageText = messageCursor.getString(messageTextIndex);
-                        boolean isSender = messageCursor.getInt(isSenderIndex) == 1; // Convertir a boolean
-                        String sentAtString = messageCursor.getString(sentAtIndex);
-
-                        Date sentAtDate = convertStringToDate(sentAtString);
-                        messages.add(new Message(messageId, messageContactId, messageText, isSender, sentAtDate)); // Asumiendo nuevo constructor
-                    } else {
-                        Log.e("ContactList", "Column index not found in messages for 'message' or 'sent_at'");
-                    }
-                }
-                messageCursor.close();
-
-                // Aquí se asume que el constructor de Contact ahora acepta una lista de mensajes
-                Contact contact = new Contact(contactId, contactName, contactPublicKey, contactPhoto,messages, context);
-                contacts.add(contact);
+                // Crear el contacto y añadirlo a la lista
+                contacts.add(new Contact(contactId, contactName, contactPhoto, messages, context));
             }
         }
         sortContacts();
@@ -80,7 +58,41 @@ public class ContactList {
         db.close();
     }
 
-    // Método para convertir la cadena a Date
+    // Método para cargar los mensajes asociados a un contacto
+    private List<Message> loadMessagesForContact(SQLiteDatabase db, int contactId) {
+        List<Message> messages = new ArrayList<>();
+        Cursor messageCursor = db.rawQuery(
+                "SELECT * FROM messages WHERE contact_id = ?",
+                new String[]{String.valueOf(contactId)}
+        );
+
+        int idIndex = messageCursor.getColumnIndex("id");
+        int contactIdIndex = messageCursor.getColumnIndex("contact_id");
+        int messageTextIndex = messageCursor.getColumnIndex("message");
+        int sentAtIndex = messageCursor.getColumnIndex("sent_at");
+        int isSenderIndex = messageCursor.getColumnIndex("is_sender");
+
+        while (messageCursor.moveToNext()) {
+            // Validar que se hayan obtenido correctamente los índices
+            if (idIndex != -1 && contactIdIndex != -1 && messageTextIndex != -1
+                    && sentAtIndex != -1 && isSenderIndex != -1) {
+                int messageId = messageCursor.getInt(idIndex);
+                int messageContactId = messageCursor.getInt(contactIdIndex);
+                String messageText = messageCursor.getString(messageTextIndex);
+                boolean isSender = messageCursor.getInt(isSenderIndex) == 1;
+                String sentAtString = messageCursor.getString(sentAtIndex);
+
+                Date sentAtDate = convertStringToDate(sentAtString);
+                messages.add(new Message(messageId, messageContactId, messageText, isSender, sentAtDate));
+            } else {
+                Log.e("ContactList", "Column index not found in messages for 'message' or 'sent_at'");
+            }
+        }
+        messageCursor.close();
+        return messages;
+    }
+
+    // Conversión de String a Date
     private Date convertStringToDate(String dateString) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault());
         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -103,6 +115,30 @@ public class ContactList {
         return contacts;
     }
 
+    // Agregar un nuevo contacto y actualizar la lista
+    public int addContact(String name, byte[] photo, Context context) {
+        SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
+
+        ContentValues contactValues = new ContentValues();
+        contactValues.put("name", name);
+        contactValues.put("photo", photo);
+
+        long contactId = db.insert("contacts", null, contactValues);
+        db.close();
+
+        Contact newContact = new Contact((int) contactId, name, photo, new ArrayList<>(), context);
+        contacts.add(newContact);
+        sortContacts();
+
+        return contacts.size() - 1;
+    }
+
+    // Recargar la lista de contactos
+    public void reloadContacts(Context context) {
+        loadContacts(context);
+    }
+
+    // Ordenar los contactos según la fecha del último mensaje
     private void sortContacts() {
         contacts.sort((c1, c2) -> {
             Date date1 = c1.getLastMessageDate();
@@ -114,24 +150,5 @@ public class ContactList {
 
             return date2.compareTo(date1);
         });
-    }
-
-    public int addContact(String name, String publicKey, byte[] photo, Context context) {
-        SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
-
-        ContentValues contactValues = new ContentValues();
-        contactValues.put("name", name);
-        contactValues.put("public_key", publicKey);
-        contactValues.put("photo", photo);
-
-        long contactId = db.insert("contacts", null, contactValues);
-        db.close();
-
-        // Usar lista vacía en lugar de null
-        Contact newContact = new Contact((int) contactId, name, publicKey, photo, new ArrayList<>(), context);
-        contacts.add(newContact);
-        sortContacts();
-
-        return contacts.size() - 1;
     }
 }
