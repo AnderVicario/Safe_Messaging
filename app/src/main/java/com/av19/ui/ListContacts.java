@@ -274,7 +274,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
 
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this, R.style.RoundedDialog);
         builder.setTitle(R.string.about_title)
-                .setMessage(getString(R.string.app_name) + " v: " + versionName + "\n\n" +
+                .setMessage(getString(R.string.app_name) + " " + versionName + "\n\n" +
                         getString(R.string.about_message) + "\n\n" +
                         getString(R.string.about_copyright))
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> dialog.dismiss())
@@ -306,6 +306,11 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
                         if (newContactName != null) {
                             int index = ContactList.getInstance(this).addContact(newContactName, newContactPhoto,this);
                             contactsAdapter.notifyItemInserted(index);
+                            SnackbarUtils.showSuccess(
+                                    findViewById(android.R.id.content),
+                                    this,
+                                    getString(R.string.snackbar_contact_added)
+                            );
                         }
                     }
                 }
