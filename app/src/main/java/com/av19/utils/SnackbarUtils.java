@@ -49,8 +49,12 @@ public class SnackbarUtils {
         if (iconRes != null){
             textView.setCompoundDrawablesWithIntrinsicBounds(iconRes, 0, 0, 0);
             textView.setCompoundDrawablePadding(context.getResources().getDimensionPixelOffset(R.dimen.padding_icon));
+            textView.setTextColor(Color.WHITE);
         }
-        textView.setTextColor(Color.WHITE);
+        else {
+            textView.setTextColor(ColorStateList.valueOf(ContextCompat.getColor(context, R.color.onSurface)));
+        }
+
     }
 
 }

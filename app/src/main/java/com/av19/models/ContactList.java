@@ -133,6 +133,16 @@ public class ContactList {
         return contacts.size() - 1;
     }
 
+    public void updateContact(int contactId, String newName, byte[] newPhoto) {
+        SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("name", newName);
+        values.put("photo", newPhoto);
+        int rowsAffected = db.update("contacts", values, "id = ?", new String[]{String.valueOf(contactId)});
+        Log.d("ContactList", "Actualizados " + rowsAffected + " registros para el contacto " + contactId);
+        db.close();
+    }
+
     // Recargar la lista de contactos
     public void reloadContacts(Context context) {
         loadContacts(context);

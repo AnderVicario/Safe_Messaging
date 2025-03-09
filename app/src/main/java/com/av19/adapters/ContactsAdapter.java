@@ -71,7 +71,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHo
                 if (position != RecyclerView.NO_POSITION) {
                     Contact contact = contactList.getContacts().get(position);
                     Intent intent = new Intent(context, Conversation.class);
-                    intent.putExtra("contact_id", contact.getId());
+                    intent.putExtra("contact_id", String.valueOf(contact.getId()));
                     intent.putExtra("contact_name", contact.getName());
                     intent.putExtra("contact_photo", contact.getPhoto());
                     context.startActivity(intent);
@@ -83,7 +83,6 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHo
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION) {
                     Contact contact = contactList.getContacts().get(position);
-                    // Se crea el DialogFragment pasando los datos actuales del contacto
                     EditContactDialogFragment dialogFragment = EditContactDialogFragment.newInstance(
                             contact.getId(),
                             contact.getName(),

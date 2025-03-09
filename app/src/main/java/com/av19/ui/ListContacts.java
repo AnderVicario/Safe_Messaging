@@ -320,6 +320,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
 
     @Override
     public void onContactEdited(int contactId, String newName, byte[] contactPhoto) {
+        ContactList.getInstance(this).updateContact(contactId, newName, contactPhoto);
         for (Contact c : contactList.getContacts()) {
             if (c.getId() == contactId) {
                 c.setName(newName);
