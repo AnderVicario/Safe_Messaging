@@ -43,4 +43,5 @@
     <string name="snackbar_contact_added">Se ha añadido exitosamente.</string>
     <string name="new_message">Nuevo mensaje!</string>
     <string name="new_message_description">Has enviado un nuevo mensaje.</string>
+    <string name="edit_username">Nuevo nombre</string>
 </resources>

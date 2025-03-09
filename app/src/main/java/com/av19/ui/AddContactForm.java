@@ -62,13 +62,57 @@ public class AddContactForm extends BaseLocaleActivity {
             if(result.getResultCode() == Activity.RESULT_OK && result.getData() != null){
                 Uri imageUri = result.getData().getData();
                 try {
-                    Bitmap bitmap = android.provider.MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-                    iv_contact_icon.setImageBitmap(bitmap);
+                    // Load the original bitmap
+                    Bitmap originalBitmap = android.provider.MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+
+                    // Get the dimensions
+                    int width = originalBitmap.getWidth();
+                    int height = originalBitmap.getHeight();
+
+                    // Determine the square size (use the smaller dimension)
+                    int squareSize = Math.min(width, height);
+
+                    // Calculate cropping coordinates to get center of image
+                    int x = (width - squareSize) / 2;
+                    int y = (height - squareSize) / 2;
+
+                    // Create a square cropped bitmap (1:1 aspect ratio)
+                    Bitmap croppedBitmap = Bitmap.createBitmap(
+                            originalBitmap,
+                            x,
+                            y,
+                            squareSize,
+                            squareSize
+                    );
+
+                    // Scale down the image if it's too large
+                    int targetSize = 500; // You can adjust this target size as needed
+                    Bitmap scaledBitmap = Bitmap.createScaledBitmap(
+                            croppedBitmap,
+                            targetSize,
+                            targetSize,
+                            true
+                    );
+
+                    // Set the processed image to the ImageView
+                    iv_contact_icon.setImageBitmap(scaledBitmap);
+
+                    // Convert to byte array for storage
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                    scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream);
                     contactPhoto = stream.toByteArray();
+
+                    // Recycle the bitmaps to free memory
+                    if (originalBitmap != croppedBitmap) {
+                        originalBitmap.recycle();
+                    }
+                    if (croppedBitmap != scaledBitmap) {
+                        croppedBitmap.recycle();
+                    }
+
                 } catch (IOException e) {
                     e.printStackTrace();
+                    Toast.makeText(AddContactForm.this, "Failed to process image", Toast.LENGTH_SHORT).show();
                 }
             }
         });

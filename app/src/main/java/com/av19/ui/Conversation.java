@@ -8,6 +8,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -109,9 +110,16 @@ public class Conversation extends BaseLocaleActivity {
         Intent intent = getIntent();
         contactId = intent.getStringExtra("contact_id");
         contactName = intent.getStringExtra("contact_name");
+        byte[] photo = getIntent().getByteArrayExtra("contact_photo");
 
         profileName.setText(contactName);
-        profilePicture.setImageResource(R.drawable.ic_logo_background);
+
+        if (photo != null) {
+            Bitmap bitmap = android.graphics.BitmapFactory.decodeByteArray(photo, 0, photo.length);
+            profilePicture.setImageBitmap(bitmap);
+        } else {
+            profilePicture.setImageResource(R.drawable.ic_launcher_background);
+        }
 
         currentUser = getSharedPreferences("session", MODE_PRIVATE)
                 .getString("auth_token", null);

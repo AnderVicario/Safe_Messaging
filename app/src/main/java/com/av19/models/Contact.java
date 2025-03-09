@@ -72,4 +72,12 @@ public class Contact {
         // Formato para fechas mayores a 1 semana
         return new SimpleDateFormat(context.getString(R.string.day_format), Locale.getDefault()).format(messageDate);
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setPhoto(byte[] photo) {
+        this.photo = photo;
+    }
 }

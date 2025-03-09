@@ -32,6 +32,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
+import com.av19.models.Contact;
 import com.av19.utils.SnackbarUtils;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
@@ -49,7 +50,7 @@ import com.google.android.material.navigation.NavigationView;
 
 import java.util.Locale;
 
-public class ListContacts extends BaseLocaleActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class ListContacts extends BaseLocaleActivity implements NavigationView.OnNavigationItemSelectedListener, EditContactDialogFragment.EditContactDialogListener {
 
     private ContactList contactList;
     private ContactsAdapter contactsAdapter;
@@ -316,4 +317,16 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
                 }
             }
     );
+
+    @Override
+    public void onContactEdited(int contactId, String newName, byte[] contactPhoto) {
+        for (Contact c : contactList.getContacts()) {
+            if (c.getId() == contactId) {
+                c.setName(newName);
+                c.setPhoto(contactPhoto);
+                break;
+            }
+        }
+        contactsAdapter.notifyDataSetChanged();
+    }
 }

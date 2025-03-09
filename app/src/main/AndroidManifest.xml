@@ -38,6 +38,9 @@
             android:name=".ui.AddContactForm"
             android:exported="false" />
         <activity
+            android:name=".ui.EditContactDialogFragment"
+            android:exported="false" />
+        <activity
             android:name=".ui.Conversation"
             android:exported="false"
             android:windowSoftInputMode="adjustResize"/>
