@@ -42,4 +42,6 @@
     <string name="day_format">dd/MM/yy</string>
     <string name="snackbar_warning_empty_user">Ingress username.</string>
     <string name="snackbar_contact_added">Contact added successfully.</string>
+    <string name="new_message">New Message!</string>
+    <string name="new_message_description">You have sent a new message.</string>
 </resources>

@@ -1,7 +1,14 @@
 package com.av19.ui;
 
+import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -16,6 +23,8 @@ import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -74,6 +83,10 @@ public class Conversation extends BaseLocaleActivity {
         initToolbar();
         initListeners();
         refreshMessagesUI();
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 11);
+        }
     }
 
     // Inicializa la interfaz de usuario y las propiedades de la ventana.
@@ -388,9 +401,34 @@ public class Conversation extends BaseLocaleActivity {
     private void sendLocalMessage(String messageText) {
         // Almacenar mensaje local (se considera que el usuario es el remitente, por lo que isSender=true)
         storeMessageInDatabase(Integer.parseInt(contactId), true, messageText);
+        sendMessageSendNotification();
 
         // Actualizar la UI para mostrar el mensaje enviado
         refreshMessagesUI();
+    }
+
+    private void sendMessageSendNotification() {
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        String channelId = "msg_channel";
+
+        // Crear el NotificationCompat.Builder con el canal indicado
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(R.drawable.cdnlogo_com_whatsapp2)
+                .setContentTitle(getString(R.string.new_message))
+                .setContentText(getString(R.string.new_message_description))
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true);
+
+        // Para Android Oreo (API 26) y superior, es necesario crear un canal de notificaciones
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence channelName = "MSG_CHANNEL";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel notificationChannel = new NotificationChannel(channelId, channelName, importance);
+            notificationManager.createNotificationChannel(notificationChannel);
+        }
+
+        // Enviar la notificación (el número 1 es el ID de la notificación, se puede usar para actualizar o cancelar)
+        notificationManager.notify(1, builder.build());
     }
 
     // -------------------------------------------------

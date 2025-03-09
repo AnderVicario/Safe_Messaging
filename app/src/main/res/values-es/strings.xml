@@ -41,4 +41,6 @@
     <string name="day_format">dd/MM/yy</string>
     <string name="snackbar_warning_empty_user">Ingresa nombre de usuario.</string>
     <string name="snackbar_contact_added">Se ha añadido exitosamente.</string>
+    <string name="new_message">Nuevo mensaje!</string>
+    <string name="new_message_description">Has enviado un nuevo mensaje.</string>
 </resources>

@@ -41,4 +41,8 @@
     <string name="day_format">yy/MM/dd</string>
     <string name="snackbar_warning_empty_user">Sartu erabiltzaile izena.</string>
     <string name="snackbar_contact_added">Arrakastaz kontaktua gehituta.</string>
+    <string name="new_message">Mezu berria!</string>
+    <string name="new_message">M</string>
+    <string name="new_message">M</string>
+    <string name="new_message_description">Mezu berri bat bidali duzu.</string>
 </resources>
