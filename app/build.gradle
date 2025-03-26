@@ -43,4 +43,16 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
+    implementation (libs.osmdroid.android){
+        exclude group: 'com.j256.ormlite', module: 'ormlite-core'
+    }
+    implementation (libs.osmdroid.wms){
+        exclude group: 'com.j256.ormlite', module: 'ormlite-core'
+    }
+    implementation (libs.osmdroid.mapsforge){
+        exclude group: 'com.j256.ormlite', module: 'ormlite-core'
+    }
+    implementation (libs.osmdroid.geopackage) {
+        exclude group: 'com.j256.ormlite', module: 'ormlite-core'
+    }
 }

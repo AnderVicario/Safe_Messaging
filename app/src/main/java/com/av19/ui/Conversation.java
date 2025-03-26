@@ -1,6 +1,7 @@
 package com.av19.ui;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -23,6 +24,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
@@ -32,8 +35,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.av19.R;
 import com.av19.adapters.MessagesAdapter;
+import com.av19.models.ContactList;
 import com.av19.models.Message;
 import com.av19.utils.DatabaseHelper;
+import com.av19.utils.SnackbarUtils;
 
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
@@ -67,6 +72,8 @@ public class Conversation extends BaseLocaleActivity {
     private RecyclerView messagesRecyclerView;
     private EditText messageEditText;
     private FrameLayout btnSend;
+
+    private FrameLayout btnLocation;
 
     // Variables de datos
     private String contactId, contactName;
@@ -103,6 +110,7 @@ public class Conversation extends BaseLocaleActivity {
         messagesRecyclerView = findViewById(R.id.rview_messages);
         messageEditText = findViewById(R.id.et_message);
         btnSend = findViewById(R.id.frl_send);
+        btnLocation = findViewById(R.id.frl_location);
     }
 
     // Recupera los extras del intent.
@@ -144,7 +152,23 @@ public class Conversation extends BaseLocaleActivity {
                 sendLocalMessage(messageText);
             }
         });
+        btnLocation.setOnClickListener(v -> {
+            Intent intent = new Intent(this, AddLocationMenu.class);
+            addLocationLauncher.launch(intent);
+        });
     }
+
+    private final ActivityResultLauncher<Intent> addLocationLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    Intent data = result.getData();
+                    if (data != null) {
+                        String location = data.getStringExtra("location");
+                    }
+                }
+            }
+    );
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
