@@ -1,5 +1,5 @@
 [versions]
-agp = "8.9.0"
+agp = "8.6.0"
 androidDatabaseSqlcipher = "4.5.3"
 bcprovJdk18on = "1.77"
 bcprovJdk18onVersion = "1.76"

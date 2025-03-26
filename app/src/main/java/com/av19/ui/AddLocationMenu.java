@@ -1,84 +1,228 @@
 package com.av19.ui;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
-import androidx.core.view.ViewCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.av19.R;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.tileprovider.tilesource.XYTileSource;
+import org.osmdroid.util.MapTileIndex;
+import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.views.overlay.MapEventsOverlay;
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 public class AddLocationMenu extends BaseLocaleActivity {
 
+    private static final int PERMISSION_REQUEST_CODE = 1;
     private MapView map;
+    private Marker currentMarker;
+    private MyLocationNewOverlay myLocationOverlay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // Habilitar Edge-to-Edge
-        EdgeToEdge.enable(this);
+        setupWindow();
         setContentView(R.layout.map_menu);
 
-        // Aplicar insets al contenedor principal
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        initializeMap();
+        configureZoomControls();
+        setupMapEvents();
+        requestLocationPermission();
+    }
 
-        // Inicializar la configuración de osmdroid
+    private void requestLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    PERMISSION_REQUEST_CODE);
+        } else {
+            setupLocationOverlay();
+        }
+    }
+
+    private Bitmap drawableToBitmap(Drawable drawable) {
+        if (drawable instanceof BitmapDrawable) {
+            return ((BitmapDrawable) drawable).getBitmap();
+        }
+
+        int width = drawable.getIntrinsicWidth();
+        int height = drawable.getIntrinsicHeight();
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+
+        return bitmap;
+    }
+
+    private void setupLocationOverlay() {
+        myLocationOverlay = new MyLocationNewOverlay(
+                new GpsMyLocationProvider(getApplicationContext()),
+                map
+        );
+
+        // Personalizar el icono de ubicación
+        Drawable locationDrawable = ContextCompat.getDrawable(this, R.drawable.custom_location);
+        if (locationDrawable != null) {
+            Bitmap locationBitmap = drawableToBitmap(locationDrawable);
+            myLocationOverlay.setPersonIcon(locationBitmap);
+        }
+        myLocationOverlay.setPersonAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+
+        myLocationOverlay.enableMyLocation();
+        myLocationOverlay.setDrawAccuracyEnabled(true);
+        myLocationOverlay.runOnFirstFix(() -> runOnUiThread(() -> {
+            if (myLocationOverlay.getMyLocation() != null) {
+                map.getController().setCenter(myLocationOverlay.getMyLocation());
+                map.getController().setZoom(17.0);
+            }
+        }));
+        map.getOverlays().add(myLocationOverlay);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                setupLocationOverlay();
+            } else {
+                Toast.makeText(this, "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (myLocationOverlay != null) {
+            myLocationOverlay.enableMyLocation();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (myLocationOverlay != null) {
+            myLocationOverlay.disableMyLocation();
+        }
+    }
+
+    private void addNewMarker(GeoPoint position) {
+        currentMarker = new Marker(map);
+        currentMarker.setPosition(position);
+
+        // Personalizar el marcador
+        currentMarker.setIcon(ContextCompat.getDrawable(this, R.drawable.custom_marker));
+        currentMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        currentMarker.setTitle(createMarkerTitle(position));
+
+        map.getOverlays().add(currentMarker);
+        map.invalidate();
+    }
+
+    private void setupWindow() {
+        EdgeToEdge.enable(this);
+        Window window = getWindow();
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.setStatusBarColor(ContextCompat.getColor(this, R.color.surface));
+    }
+
+    private void initializeMap() {
         Configuration.getInstance().load(getApplicationContext(), getPreferences(MODE_PRIVATE));
-
-        // Obtener y configurar el MapView
         map = findViewById(R.id.map);
-        map.setTileSource(TileSourceFactory.MAPNIK);
-        map.setMultiTouchControls(true);
-        // Establecer un zoom y centro inicial (por ejemplo, en Vitoria-Gasteiz)
-        GeoPoint startPoint = new GeoPoint(42.8467, -2.6731);
-        map.getController().setZoom(12.0);
-        map.getController().setCenter(startPoint);
 
-        // Agregar un overlay para detectar toques en el mapa
+        map.setTileSource(new XYTileSource("CartoVoyager", 0, 20, 512, ".png",
+                new String[] { "https://a.basemaps.cartocdn.com/rastertiles/voyager/",
+                        "https://b.basemaps.cartocdn.com/rastertiles/voyager/",
+                        "https://c.basemaps.cartocdn.com/rastertiles/voyager/" }) {
+            @Override
+            public String getTileURLString(long pMapTileIndex) {
+                return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" +
+                        MapTileIndex.getX(pMapTileIndex) + "/" +
+                        MapTileIndex.getY(pMapTileIndex) + "@2x.png";
+            }
+        });
+        map.setMultiTouchControls(true);
+        centerMapOnLocation(new GeoPoint(42.8467, -2.6731), 17.0);
+    }
+
+    private void centerMapOnLocation(GeoPoint point, double zoomLevel) {
+        map.getController().setZoom(zoomLevel);
+        map.getController().setCenter(point);
+    }
+
+    private void configureZoomControls() {
+        map.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
+
+        ImageButton btnZoomIn = findViewById(R.id.btnZoomIn);
+        ImageButton btnZoomOut = findViewById(R.id.btnZoomOut);
+
+        btnZoomIn.setOnClickListener(v -> map.getController().zoomIn());
+        btnZoomOut.setOnClickListener(v -> map.getController().zoomOut());
+    }
+
+    private void setupMapEvents() {
         MapEventsOverlay eventsOverlay = new MapEventsOverlay(new MapEventsReceiver() {
             @Override
             public boolean singleTapConfirmedHelper(GeoPoint p) {
-                // Crear el marcador en la posición tocada
-                Marker marker = new Marker(map);
-                marker.setPosition(p);
-                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-                // Opcional: asignar un título con las coordenadas
-                marker.setTitle("Lat: " + p.getLatitude() + "\nLon: " + p.getLongitude());
-
-                // Agregar listener para mostrar un Toast al pulsar el marcador
-                marker.setOnMarkerClickListener((m, mapView) -> {
-                    Toast.makeText(AddLocationMenu.this,
-                            "Coordenadas: " + m.getTitle(), Toast.LENGTH_SHORT).show();
-                    return true;
-                });
-
-                // Agregar el marcador al mapa y refrescarlo
-                map.getOverlays().add(marker);
-                map.invalidate();
+                handleMapTap(p);
                 return true;
             }
 
             @Override
             public boolean longPressHelper(GeoPoint p) {
-                // Aquí podrías implementar alguna acción para pulsación larga, si lo deseas
                 return false;
             }
         });
+
         map.getOverlays().add(eventsOverlay);
+    }
+
+    private void handleMapTap(GeoPoint position) {
+        removeExistingMarker();
+        addNewMarker(position);
+        showCoordinatesToast(position);
+    }
+
+    private void removeExistingMarker() {
+        if (currentMarker != null) {
+            map.getOverlays().remove(currentMarker);
+        }
+    }
+
+    private String createMarkerTitle(GeoPoint position) {
+        return String.format("Lat: %.4f\nLon: %.4f",
+                position.getLatitude(),
+                position.getLongitude());
+    }
+
+    private void showCoordinatesToast(GeoPoint position) {
+        Toast.makeText(this,
+                "Marcador en: " + createMarkerTitle(position),
+                Toast.LENGTH_SHORT).show();
     }
 }
