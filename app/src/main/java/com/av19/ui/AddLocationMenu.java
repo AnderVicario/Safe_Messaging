@@ -1,12 +1,15 @@
 package com.av19.ui;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageButton;
@@ -18,6 +21,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.av19.R;
+import com.av19.utils.CustomInfoWindow;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
@@ -45,11 +50,26 @@ public class AddLocationMenu extends BaseLocaleActivity {
         setupWindow();
         setContentView(R.layout.map_menu);
 
+        // Configurar el botón: se encuentra oculto por defecto en el XML
+        ExtendedFloatingActionButton buttonSend = findViewById(R.id.button_send);
+        buttonSend.setOnClickListener(v -> {
+            if (currentMarker != null) {
+                GeoPoint position = currentMarker.getPosition();
+                // Formatear las coordenadas a 4 decimales
+                String location = String.format("%.4f, %.4f", position.getLatitude(), position.getLongitude());
+                Intent data = new Intent();
+                data.putExtra("location", location);
+                setResult(RESULT_OK, data);
+                finish();
+            }
+        });
+
         initializeMap();
         configureZoomControls();
         setupMapEvents();
         requestLocationPermission();
     }
+
 
     private void requestLocationPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -138,7 +158,10 @@ public class AddLocationMenu extends BaseLocaleActivity {
         // Personalizar el marcador
         currentMarker.setIcon(ContextCompat.getDrawable(this, R.drawable.custom_marker));
         currentMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        currentMarker.setTitle(createMarkerTitle(position));
+        currentMarker.setTitle(getString(R.string.selected_marker));
+
+        CustomInfoWindow infoWindow = new CustomInfoWindow(map);
+        currentMarker.setInfoWindow(infoWindow);
 
         map.getOverlays().add(currentMarker);
         map.invalidate();
@@ -206,6 +229,9 @@ public class AddLocationMenu extends BaseLocaleActivity {
         removeExistingMarker();
         addNewMarker(position);
         showCoordinatesToast(position);
+
+        ExtendedFloatingActionButton buttonSend = findViewById(R.id.button_send);
+        buttonSend.setVisibility(View.VISIBLE);
     }
 
     private void removeExistingMarker() {
@@ -214,6 +240,7 @@ public class AddLocationMenu extends BaseLocaleActivity {
         }
     }
 
+    @SuppressLint("DefaultLocale")
     private String createMarkerTitle(GeoPoint position) {
         return String.format("Lat: %.4f\nLon: %.4f",
                 position.getLatitude(),

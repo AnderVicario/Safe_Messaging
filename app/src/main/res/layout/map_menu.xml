@@ -82,4 +82,20 @@
             app:tint="@color/onSurface" />
     </LinearLayout>
 
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/button_send"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="32dp"
+        android:backgroundTint="@color/primary"
+        android:text="@string/select_location"
+        android:textAlignment="center"
+        android:textColor="@color/onPrimary"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/map"
+        app:layout_constraintStart_toStartOf="@+id/map"
+        app:tint="@color/onPrimary" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

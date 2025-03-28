@@ -165,6 +165,7 @@ public class Conversation extends BaseLocaleActivity {
                     Intent data = result.getData();
                     if (data != null) {
                         String location = data.getStringExtra("location");
+                        messageEditText.setText(location);
                     }
                 }
             }
