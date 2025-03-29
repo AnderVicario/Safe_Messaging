@@ -11,7 +11,7 @@ android {
         minSdk 26
         targetSdk 34
         versionCode 1
-        versionName "beta1.0-noAPI"
+        versionName "beta2.0-API"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 

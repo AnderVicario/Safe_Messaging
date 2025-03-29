@@ -29,7 +29,7 @@ public class SnackbarUtils {
     }
 
     public static void showError(@NonNull View view, @NonNull Context context, String message) {
-        Snackbar snackbar = Snackbar.make(view, message, Snackbar.LENGTH_INDEFINITE);
+        Snackbar snackbar = Snackbar.make(view, message, Snackbar.LENGTH_LONG);
         configBaseSnackbar(snackbar, context, R.color.error, R.drawable.ic_error);
         snackbar.getView().setBackgroundTintList(
                 ColorStateList.valueOf(Color.argb(200, 255, 0, 0))
