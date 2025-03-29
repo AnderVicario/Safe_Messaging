@@ -37,7 +37,13 @@ import com.av19.R;
 import com.av19.adapters.MessagesAdapter;
 import com.av19.models.ContactList;
 import com.av19.models.Message;
+import com.av19.models.api.ApiResponse;
+import com.av19.models.api.MessageCreate;
+import com.av19.models.api.MessageResponse;
+import com.av19.utils.AESEncryptionManager;
+import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
+import com.av19.utils.RetrofitClient;
 import com.av19.utils.SnackbarUtils;
 
 import net.sqlcipher.Cursor;
@@ -91,10 +97,11 @@ public class Conversation extends BaseLocaleActivity {
         initToolbar();
         initListeners();
         refreshMessagesUI();
+        fetchMessages();
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+        /*if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 11);
-        }
+        }*/
     }
 
     // Inicializa la interfaz de usuario y las propiedades de la ventana.
@@ -149,7 +156,7 @@ public class Conversation extends BaseLocaleActivity {
             String messageText = messageEditText.getText().toString().trim();
             if (!messageText.isEmpty()) {
                 messageEditText.setText("");
-                sendLocalMessage(messageText);
+                sendAndStoreMessage(messageText);
             }
         });
         btnLocation.setOnClickListener(v -> {
@@ -415,6 +422,34 @@ public class Conversation extends BaseLocaleActivity {
         storeMessageInDatabase(contactId, isSender, message, timestamp);
     }
 
+    /**
+     * Recupera las marcas de tiempo de mensajes locales.
+     * Utilizado para evitar duplicación durante la sincronización.
+     */
+    private List<String> getLocalMessageTimestamps() {
+        List<String> timestamps = new ArrayList<>();
+        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
+        SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
+
+        try {
+            Cursor cursor = db.rawQuery(
+                    "SELECT sent_at FROM messages",
+                    null
+            );
+
+            while (cursor.moveToNext()) {
+                timestamps.add(cursor.getString(cursor.getColumnIndexOrThrow("sent_at")));
+            }
+            cursor.close();
+        } catch (Exception e) {
+            Log.e(TAG, "Error al obtener timestamps de mensajes", e);
+        } finally {
+            db.close();
+        }
+
+        return timestamps;
+    }
+
     private Date convertStringToDate(String dateString) {
         try {
             return sdfUtc.parse(dateString);
@@ -424,20 +459,78 @@ public class Conversation extends BaseLocaleActivity {
         }
     }
 
+    /**
+     * Obtiene el ID de contacto basado en su nombre.
+     * @param contactName Nombre del contacto a buscar
+     * @return ID del contacto o -1 si no se encuentra
+     */
+    private int getContactIdByName(String contactName) {
+        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
+        SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
+        int id = -1;
+
+        try {
+            Cursor cursor = db.rawQuery(
+                    "SELECT id FROM contacts WHERE name = ?",
+                    new String[]{contactName}
+            );
+
+            if (cursor.moveToFirst()) {
+                id = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
+            }
+            cursor.close();
+        } catch (Exception e) {
+            Log.e(TAG, "Error al buscar contacto por nombre", e);
+        } finally {
+            db.close();
+        }
+
+        return id;
+    }
+
     // -------------------------
     // --- Envío de Mensajes ---
     // -------------------------
 
     /**
-     * Almacena el mensaje localmente y actualiza la UI.
+     * Encripta, envía mediante API y almacena el mensaje localmente.
      */
-    private void sendLocalMessage(String messageText) {
-        // Almacenar mensaje local (se considera que el usuario es el remitente, por lo que isSender=true)
-        storeMessageInDatabase(Integer.parseInt(contactId), true, messageText);
-        sendMessageSendNotification();
+    private void sendAndStoreMessage(String messageText) {
+        String encryptedMessage;
+        try {
+            encryptedMessage = AESEncryptionManager.encryptText(messageText,
+                    AESEncryptionManager.getAESKey(contactName));
+        } catch (Exception e) {
+            Log.e(TAG, "Error de encriptación", e);
+            return;
+        }
 
-        // Actualizar la UI para mostrar el mensaje enviado
+        if (encryptedMessage == null) {
+            Log.e(TAG, "La encriptación falló");
+            return;
+        }
+
+        // Almacenar localmente primero
+        storeMessageInDatabase(Integer.parseInt(contactId), true, messageText);
         refreshMessagesUI();
+
+        // Luego enviar a la API
+        MessageCreate messageCreate = new MessageCreate(currentUser, contactName, encryptedMessage);
+        ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
+        apiService.sendMessage(messageCreate).enqueue(new retrofit2.Callback<ApiResponse>() {
+            @Override
+            public void onResponse(retrofit2.Call<ApiResponse> call, retrofit2.Response<ApiResponse> response) {
+                if (!response.isSuccessful()) {
+                    Log.e(TAG, "Error en la API: " + response.errorBody());
+                    fetchMessages();
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<ApiResponse> call, Throwable t) {
+                Log.e(TAG, "Fallo al enviar mensaje", t);
+            }
+        });
     }
 
     private void sendMessageSendNotification() {
@@ -462,6 +555,95 @@ public class Conversation extends BaseLocaleActivity {
 
         // Enviar la notificación (el número 1 es el ID de la notificación, se puede usar para actualizar o cancelar)
         notificationManager.notify(1, builder.build());
+    }
+
+    // -----------------------------
+    // --- Recepción de Mensajes ---
+    // -----------------------------
+
+    /**
+     * Obtiene mensajes desde la API.
+     */
+    private void fetchMessages() {
+        ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
+        apiService.getMessages(currentUser).enqueue(new retrofit2.Callback<List<MessageResponse>>() {
+            @Override
+            public void onResponse(retrofit2.Call<List<MessageResponse>> call, retrofit2.Response<List<MessageResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    processMessages(response.body());
+                } else {
+                    Log.e(TAG, "Error al obtener mensajes: " + response.errorBody());
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<List<MessageResponse>> call, Throwable t) {
+                Log.e(TAG, "Fallo al obtener mensajes", t);
+            }
+        });
+    }
+
+    /**
+     * Procesa y almacena nuevos mensajes recibidos de la API web.
+     * Guarda todos los mensajes en la base de datos, pero solo actualiza
+     * la UI si hay mensajes nuevos para la conversación actual.
+     */
+    private void processMessages(List<MessageResponse> messagesResponse) {
+        List<String> localTimestamps = getLocalMessageTimestamps();
+        boolean hasNewMessagesForCurrentContact = false;
+
+        for (MessageResponse mr : messagesResponse) {
+            String sentAtStr = mr.getTimestamp();
+            String sender = mr.getSender();
+            String recipient = this.currentUser;
+
+            // Omitir mensajes que ya tenemos o mensajes iniciales
+            if (localTimestamps.contains(sentAtStr) || mr.getIs_initial()) {
+                continue;
+            }
+
+            String decryptedMessage;
+            try {
+                decryptedMessage = AESEncryptionManager.decryptText(
+                        mr.getEncrypted_message(),
+                        AESEncryptionManager.getAESKey(sender)
+                );
+            } catch (Exception e) {
+                Log.e(TAG, "Error de desencriptación", e);
+                continue;
+            }
+
+            if (decryptedMessage == null) continue;
+
+            // Determinar el ID del contacto para este mensaje
+            int messageContactId;
+            boolean messageIsSender;
+
+            if (sender.equals(currentUser)) {
+                // Mensaje enviado por el usuario actual
+                messageContactId = getContactIdByName(recipient);
+                messageIsSender = true;
+            } else {
+                // Mensaje recibido por el usuario actual
+                messageContactId = getContactIdByName(sender);
+                messageIsSender = false;
+            }
+
+            // Solo si se pudo identificar el contacto
+            if (messageContactId != -1) {
+                storeMessageInDatabase(messageContactId, messageIsSender, decryptedMessage, sentAtStr);
+
+                // Verificar si este mensaje pertenece a la conversación actual
+                if (messageContactId == Integer.parseInt(contactId)) {
+                    hasNewMessagesForCurrentContact = true;
+                }
+            }
+        }
+
+        // Solo actualizar la UI si hay mensajes nuevos para el contacto actual
+        if (hasNewMessagesForCurrentContact) {
+            runOnUiThread(this::refreshMessagesUI);
+        }
     }
 
     // -------------------------------------------------

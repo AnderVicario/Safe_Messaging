@@ -36,6 +36,7 @@ public class ContactList {
         Cursor contactCursor = db.rawQuery("SELECT * FROM contacts", null);
         int contactIdIndex = contactCursor.getColumnIndex("id");
         int contactNameIndex = contactCursor.getColumnIndex("name");
+        int contactPublicKeyIndex = contactCursor.getColumnIndex("public_key");
         int contactPhotoIndex = contactCursor.getColumnIndex("photo");
 
         if (contactIdIndex == -1 || contactNameIndex == -1) {
@@ -44,13 +45,14 @@ public class ContactList {
             while (contactCursor.moveToNext()) {
                 int contactId = contactCursor.getInt(contactIdIndex);
                 String contactName = contactCursor.getString(contactNameIndex);
+                String contactPublicKey = contactCursor.getString(contactPublicKeyIndex);
                 byte[] contactPhoto = contactPhotoIndex != -1 ? contactCursor.getBlob(contactPhotoIndex) : null;
 
                 // Cargar mensajes para el contacto actual
                 List<Message> messages = loadMessagesForContact(db, contactId);
 
                 // Crear el contacto y añadirlo a la lista
-                contacts.add(new Contact(contactId, contactName, contactPhoto, messages, context));
+                contacts.add(new Contact(contactId, contactName, contactPublicKey, contactPhoto, messages, context));
             }
         }
         sortContacts();
@@ -116,17 +118,18 @@ public class ContactList {
     }
 
     // Agregar un nuevo contacto y actualizar la lista
-    public int addContact(String name, byte[] photo, Context context) {
+    public int addContact(String name, String publicKey, byte[] photo, Context context) {
         SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
 
         ContentValues contactValues = new ContentValues();
         contactValues.put("name", name);
+        contactValues.put("public_key", publicKey);
         contactValues.put("photo", photo);
 
         long contactId = db.insert("contacts", null, contactValues);
         db.close();
 
-        Contact newContact = new Contact((int) contactId, name, photo, new ArrayList<>(), context);
+        Contact newContact = new Contact((int) contactId, name, publicKey, photo, new ArrayList<>(), context);
         contacts.add(newContact);
         sortContacts();
 

@@ -13,7 +13,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.core.content.ContextCompat;
@@ -22,8 +21,19 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.av19.R;
+import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
+import com.av19.utils.RSAEncryptionManager;
+import com.av19.utils.RetrofitClient;
 import com.av19.utils.SnackbarUtils;
+
+import com.av19.models.api.ApiResponse;
+import com.av19.models.api.PublicKeyResponse;
+import com.av19.models.api.UserCreate;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class RegisterMenu extends BaseLocaleActivity {
 
@@ -144,37 +154,63 @@ public class RegisterMenu extends BaseLocaleActivity {
             return;
         }
 
-        if (!isValidCredentials(username)) {
-            SnackbarUtils.showError(
-                    findViewById(android.R.id.content), this, getString(R.string.snackbar_error_username_exists)
-            );
-            usernameInput.setTextColor(ContextCompat.getColor(RegisterMenu.this, R.color.error));
-            return;
-        }
+        // 1. Llamada a la API para verificar si el usuario ya existe
+        ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
+        Call<PublicKeyResponse> call = apiService.getPublicKey(username);
+        call.enqueue(new Callback<PublicKeyResponse>() {
+            @Override
+            public void onResponse(Call<PublicKeyResponse> call, Response<PublicKeyResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    SnackbarUtils.showError(
+                            findViewById(android.R.id.content), RegisterMenu.this, getString(R.string.snackbar_error_username_exists)
+                    );
+                    usernameInput.setTextColor(ContextCompat.getColor(RegisterMenu.this, R.color.error));
+                }
+                else {
+                    // Crear par de llaves
+                    String publicKey = null;
+                    try {
+                        publicKey = RSAEncryptionManager.getInstance(Boolean.TRUE, username).publicKeyString;
+                    } catch (Exception e){
+                        e.printStackTrace();
+                    }
 
-        // Simulación de registro exitoso
-        SharedPreferences userPrefs = getSharedPreferences("registered_users", MODE_PRIVATE);
-        userPrefs.edit().putString(username, password1).apply();
+                    // 2. Llamada a la API para registrar el usuario
+                    ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
+                    UserCreate userCreateData = new UserCreate(username, password1, publicKey);
+                    Call<ApiResponse> registerCall = apiService.registerUser(userCreateData);
+                    registerCall.enqueue(new Callback<ApiResponse>() {
+                        @Override
+                        public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
+                            if (response.isSuccessful() && response.body() != null) {
+                                SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
+                                prefs.edit().putString("auth_token", username).apply();
 
-        SnackbarUtils.showSuccess(
-                findViewById(android.R.id.content), this, getString(R.string.snackbar_success_register)
-        );
+                                DatabaseHelper.setPassword(RegisterMenu.this, password1);
 
-        Intent intent = new Intent(RegisterMenu.this, LoginMenu.class);
-        intent.putExtra("register_success", true);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intent);
-        finish();
-    }
+                                Intent intent = new Intent(RegisterMenu.this, LoginMenu.class);
+                                intent.putExtra("register_success", true);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(intent);
+                            }
+                        }
 
-    private boolean isValidCredentials(String username) {
-        SharedPreferences userPrefs = getSharedPreferences("registered_users", MODE_PRIVATE);
-        String storedPassword = userPrefs.getString(username, null);
+                        @Override
+                        public void onFailure(Call<ApiResponse> call, Throwable t) {
+                            SnackbarUtils.showError(
+                                    findViewById(android.R.id.content), RegisterMenu.this, getString(R.string.snackbar_server_error_register)
+                            );
+                        }
+                    });
+                }
+            }
 
-        if (storedPassword != null) {
-            return false;
-        } else {
-            return true;
-        }
+            @Override
+            public void onFailure(Call<PublicKeyResponse> call, Throwable t) {
+                SnackbarUtils.showError(
+                        findViewById(android.R.id.content), RegisterMenu.this, getString(R.string.snackbar_server_error_register)
+                );
+            }
+        });
     }
 }

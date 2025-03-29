@@ -46,4 +46,7 @@
     <string name="edit_username">Nuevo nombre</string>
     <string name="selected_marker">Marcador:</string>
     <string name="select_location">Seleccionar</string>
+    <string name="snackbar_server_error_register">Ha habido un error durante el registro.</string>
+    <string name="snackbar_server_error_login">Ha habido un error durante el inicio de sesión.</string>
+    <string name="snackbar_error_username_dontexist">Usuario no existente.</string>
 </resources>

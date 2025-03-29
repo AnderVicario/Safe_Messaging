@@ -13,7 +13,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.core.content.ContextCompat;
@@ -22,8 +21,16 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.av19.R;
+import com.av19.models.api.ApiResponse;
+import com.av19.models.api.UserLogin;
+import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
+import com.av19.utils.RetrofitClient;
 import com.av19.utils.SnackbarUtils;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class LoginMenu extends BaseLocaleActivity {
 
@@ -52,14 +59,6 @@ public class LoginMenu extends BaseLocaleActivity {
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         window.setStatusBarColor(ContextCompat.getColor(this, R.color.surface));
-
-        if (getIntent().getBooleanExtra("register_success", false)) {
-            SnackbarUtils.showSuccess(
-                    findViewById(android.R.id.content),
-                    this,
-                    getString(R.string.snackbar_success_register)
-            );
-        }
 
         // Referencias a componentes de la UI
         EditText passwordInput = findViewById(R.id.et_register_password_1);
@@ -117,39 +116,39 @@ public class LoginMenu extends BaseLocaleActivity {
             return;
         }
 
-        // Implementar verificación local
-        if (isValidCredentials(username, password)) {
-            // Guardar credenciales en SharedPreferences
-            SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
-            prefs.edit().putString("auth_token", username).apply();
+        // Llamada a la API
+        ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
+        UserLogin userLoginData = new UserLogin(username, password);
+        Call<ApiResponse> call = apiService.loginUser(userLoginData);
+        call.enqueue(new Callback<ApiResponse>() {
+            @Override
+            public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
+                    prefs.edit().putString("auth_token", username).apply();
 
-            // Establecer contraseña para encriptación de base de datos
-            DatabaseHelper.setPassword(LoginMenu.this, password);
+                    DatabaseHelper.setPassword(LoginMenu.this, password);
 
-            SnackbarUtils.showSuccess(
-                    findViewById(android.R.id.content), this, getString(R.string.snackbar_success_login)
-            );
-            navigateToContactsList();
-        } else {
-            // Mostrar error
-            SnackbarUtils.showError(
-                    findViewById(android.R.id.content), this, getString(R.string.snackbar_error_login)
-            );
-            usernameInput.setTextColor(ContextCompat.getColor(LoginMenu.this, R.color.error));
-            passwordInput.setTextColor(ContextCompat.getColor(LoginMenu.this, R.color.error));
-        }
-    }
+                    SnackbarUtils.showSuccess(
+                            findViewById(android.R.id.content), LoginMenu.this, getString(R.string.snackbar_success_login)
+                    );
+                    navigateToContactsList();
+                } else {
+                    SnackbarUtils.showError(
+                            findViewById(android.R.id.content), LoginMenu.this, getString(R.string.snackbar_error_login)
+                    );
+                    usernameInput.setTextColor(ContextCompat.getColor(LoginMenu.this, R.color.error));
+                    passwordInput.setTextColor(ContextCompat.getColor(LoginMenu.this, R.color.error));
+                }
+            }
 
-    private boolean isValidCredentials(String username, String password) {
-        SharedPreferences userPrefs = getSharedPreferences("registered_users", MODE_PRIVATE);
-        String storedPassword = userPrefs.getString(username, null);
-
-        if (storedPassword != null) {
-            // Si el usuario está registrado, comparamos la contraseña
-            return storedPassword.equals(password);
-        } else {
-            return false;
-        }
+            @Override
+            public void onFailure(Call<ApiResponse> call, Throwable t) {
+                SnackbarUtils.showError(
+                        findViewById(android.R.id.content), LoginMenu.this, getString(R.string.snackbar_server_error_login)
+                );
+            }
+        });
     }
 
     private void navigateToContactsList() {

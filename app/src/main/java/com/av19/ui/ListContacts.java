@@ -77,6 +77,14 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             );
         }
 
+        if (getIntent().getBooleanExtra("register_success", false)) {
+            SnackbarUtils.showSuccess(
+                    findViewById(android.R.id.content),
+                    this,
+                    getString(R.string.snackbar_success_register)
+            );
+        }
+
         currentUser = getSharedPreferences("session", MODE_PRIVATE)
                 .getString("auth_token", null);
 
@@ -303,9 +311,10 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
                     Intent data = result.getData();
                     if (data != null) {
                         String newContactName = data.getStringExtra("new_contact_name");
+                        String newPublicKey = data.getStringExtra("new_public_key");
                         byte[] newContactPhoto = data.getByteArrayExtra("new_contact_photo");
-                        if (newContactName != null) {
-                            int index = ContactList.getInstance(this).addContact(newContactName, newContactPhoto,this);
+                        if (newContactName != null && newPublicKey != null) {
+                            int index = ContactList.getInstance(this).addContact(newContactName, newPublicKey, newContactPhoto,this);
                             contactsAdapter.notifyItemInserted(index);
                             SnackbarUtils.showSuccess(
                                     findViewById(android.R.id.content),
