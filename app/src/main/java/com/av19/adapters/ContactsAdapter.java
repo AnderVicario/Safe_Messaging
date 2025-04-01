@@ -79,7 +79,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHo
             });
 
             // Long click: abre el DialogFragment de edición
-            cardView.setOnLongClickListener(v -> {
+            /*cardView.setOnLongClickListener(v -> {
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION) {
                     Contact contact = contactList.getContacts().get(position);
@@ -92,7 +92,7 @@ public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHo
                     dialogFragment.show(((AppCompatActivity) context).getSupportFragmentManager(), "EditContactDialog");
                 }
                 return true;
-            });
+            });*/
         }
 
         public void bind(Contact contact) {

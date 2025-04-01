@@ -55,4 +55,5 @@ dependencies {
     implementation (libs.osmdroid.geopackage) {
         exclude group: 'com.j256.ormlite', module: 'ormlite-core'
     }
+    implementation(libs.okhttp)
 }

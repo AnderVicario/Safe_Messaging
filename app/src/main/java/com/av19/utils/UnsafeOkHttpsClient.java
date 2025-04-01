@@ -7,7 +7,7 @@ import javax.net.ssl.X509TrustManager;
 
 import okhttp3.OkHttpClient;
 
-public class UnsafeOkHttpClient {
+public class UnsafeOkHttpsClient {
     public static OkHttpClient getUnsafeOkHttpClient() {
         try {
             // Crea un TrustManager que acepte todos los certificados
@@ -29,7 +29,7 @@ public class UnsafeOkHttpClient {
             sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
             final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
 
-            // Construye el OkHttpClient que no valida certificados
+            // Construye el OkHttpsClient que no valida certificados
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
             builder.sslSocketFactory(sslSocketFactory, (X509TrustManager) trustAllCerts[0]);
             builder.hostnameVerifier((hostname, session) -> true);

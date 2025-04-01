@@ -5,6 +5,7 @@ import com.av19.models.api.MessageCreate;
 import com.av19.models.api.MessageResponse;
 import com.av19.models.api.PublicKeyResponse;
 import com.av19.models.api.UpdatePublicKey;
+import com.av19.models.api.UpdateProfilePicture;
 import com.av19.models.api.UserCreate;
 import com.av19.models.api.UserLogin;
 
@@ -30,6 +31,10 @@ public interface ApiService {
     // Endpoint para obtener la clave pública de un usuario
     @GET("users/get_key/{username}")
     Call<PublicKeyResponse> getPublicKey(@Path("username") String username);
+
+    // Endpoint actualizar la imagen de perfil
+    @PUT("users/update_profile_picture")
+    Call<String> getPublicKey(@Body UpdateProfilePicture updateProfilePictureData);
 
     // Endpoint para actualizar la clave pública
     @PUT("users/update_key")

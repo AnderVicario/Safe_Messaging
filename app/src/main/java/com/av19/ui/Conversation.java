@@ -5,9 +5,11 @@ import android.app.Activity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Build;
@@ -30,6 +32,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -97,12 +100,37 @@ public class Conversation extends BaseLocaleActivity {
         initToolbar();
         initListeners();
         refreshMessagesUI();
-        fetchMessages();
+        /*fetchMessages();*/
 
         /*if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 11);
         }*/
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+                newMessageReceiver, new IntentFilter("NEW_MESSAGE")
+        );
+    }
+
+    @Override
+    protected void onPause() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(newMessageReceiver);
+        super.onPause();
+    }
+
+    private BroadcastReceiver newMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String sender = intent.getStringExtra("sender");
+            // Solo actualizamos si el sender coincide con el contacto actual
+            if (sender != null && sender.equals(contactName)) {
+                refreshMessagesUI();
+            }
+        }
+    };
 
     // Inicializa la interfaz de usuario y las propiedades de la ventana.
     private void initUI() {
@@ -522,7 +550,7 @@ public class Conversation extends BaseLocaleActivity {
             public void onResponse(retrofit2.Call<ApiResponse> call, retrofit2.Response<ApiResponse> response) {
                 if (!response.isSuccessful()) {
                     Log.e(TAG, "Error en la API: " + response.errorBody());
-                    fetchMessages();
+                    /*fetchMessages();*/
                 }
             }
 
@@ -653,7 +681,7 @@ public class Conversation extends BaseLocaleActivity {
     /**
      * Actualiza el RecyclerView con los mensajes más recientes.
      */
-    private void refreshMessagesUI() {
+    public void refreshMessagesUI() {
         List<Message> messages = getMessagesFromDatabase();
         MessagesAdapter adapter = new MessagesAdapter(messages);
         messagesRecyclerView.setLayoutManager(new LinearLayoutManager(this));

@@ -16,7 +16,7 @@ public class RetrofitClient {
             logging.setLevel(HttpLoggingInterceptor.Level.BODY);  // Log completo
 
             // Obtener cliente inseguro + logging
-            OkHttpClient okHttpClient = UnsafeOkHttpClient.getUnsafeOkHttpClient()
+            OkHttpClient okHttpClient = UnsafeOkHttpsClient.getUnsafeOkHttpClient()
                     .newBuilder()
                     .addInterceptor(logging) // Agregar logging
                     .build();

@@ -1,31 +1,24 @@
 package com.av19.ui;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.view.Menu;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowInsets;
-import android.view.WindowManager;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.view.GravityCompat;
-import androidx.core.view.WindowCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import androidx.activity.EdgeToEdge;
@@ -33,13 +26,16 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
 import com.av19.models.Contact;
+import com.av19.models.api.MessageResponse;
+import com.av19.utils.AESEncryptionManager;
+import com.av19.utils.ApiService;
+import com.av19.utils.DatabaseHelper;
+import com.av19.utils.RetrofitClient;
 import com.av19.utils.SnackbarUtils;
+import com.av19.utils.WebSocketClient;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.av19.R;
@@ -48,6 +44,13 @@ import com.av19.models.ContactList;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 
+import net.sqlcipher.Cursor;
+import net.sqlcipher.database.SQLiteDatabase;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class ListContacts extends BaseLocaleActivity implements NavigationView.OnNavigationItemSelectedListener, EditContactDialogFragment.EditContactDialogListener {
@@ -62,6 +65,8 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
     private static final String PREFS_NAME = "settings";
     private static final String KEY_THEME = "theme";
     private static final String KEY_LANG = "lang";
+    private WebSocketClient webSocketClient;
+    private static final String TAG = "ListContacts";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,6 +109,23 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
                 }
             }
         });
+
+        // Configurar y conectar el WebSocket
+        webSocketClient = new WebSocketClient();
+        webSocketClient.setOnMessageReceivedListener(new WebSocketClient.OnMessageReceivedListener() {
+            @Override
+            public void onMessageReceived(final String sender) {
+                // Puedes usar 'sender' para verificar o filtrar mensajes, si lo requieres.
+                // Llamamos a fetchMessages() para actualizar la UI.
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        fetchMessages();
+                    }
+                });
+            }
+        });
+        webSocketClient.connectWebSocket(currentUser);
     }
 
     @Override
@@ -338,5 +360,115 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             }
         }
         contactsAdapter.notifyDataSetChanged();
+    }
+
+    private void fetchMessages() {
+        ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
+        apiService.getMessages(currentUser).enqueue(new retrofit2.Callback<List<MessageResponse>>() {
+            @Override
+            public void onResponse(retrofit2.Call<List<MessageResponse>> call, retrofit2.Response<List<MessageResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    processMessages(response.body());
+                } else {
+                    Log.e(TAG, "Error al obtener mensajes: " + response.errorBody());
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<List<MessageResponse>> call, Throwable t) {
+                Log.e(TAG, "Fallo al obtener mensajes", t);
+            }
+        });
+    }
+
+    private void processMessages(List<MessageResponse> messagesResponse) {
+        List<String> localTimestamps = getLocalMessageTimestamps();
+
+        for (MessageResponse mr : messagesResponse) {
+            String sentAtStr = mr.getTimestamp();
+            String sender = mr.getSender();
+            String recipient = this.currentUser;
+
+            // Omitir mensajes que ya tenemos o mensajes iniciales
+            if (localTimestamps.contains(sentAtStr) || mr.getIs_initial()) {
+                continue;
+            }
+
+            String decryptedMessage;
+            try {
+                decryptedMessage = AESEncryptionManager.decryptText(
+                        mr.getEncrypted_message(),
+                        AESEncryptionManager.getAESKey(sender)
+                );
+            } catch (Exception e) {
+                Log.e(TAG, "Error de desencriptación", e);
+                continue;
+            }
+
+            boolean messageIsSender;
+            messageIsSender = sender.equals(currentUser);
+            storeMessageInDatabase(sender, messageIsSender, decryptedMessage, sentAtStr);
+            Intent intent = new Intent("NEW_MESSAGE");
+            intent.putExtra("sender", sender);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        }
+        refreshMessagesUI();
+    }
+
+    private List<String> getLocalMessageTimestamps() {
+        List<String> timestamps = new ArrayList<>();
+        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
+        SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
+
+        try {
+            Cursor cursor = db.rawQuery(
+                    "SELECT sent_at FROM messages",
+                    null
+            );
+
+            while (cursor.moveToNext()) {
+                timestamps.add(cursor.getString(cursor.getColumnIndexOrThrow("sent_at")));
+            }
+            cursor.close();
+        } catch (Exception e) {
+            Log.e(TAG, "Error al obtener timestamps de mensajes", e);
+        } finally {
+            db.close();
+        }
+
+        return timestamps;
+    }
+
+    private void storeMessageInDatabase(String contact, boolean isSender, String message, String timestamp) {
+        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
+        SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
+
+        try {
+            try (Cursor cursor = db.rawQuery(
+                    "SELECT id FROM contacts WHERE name = ?",
+                    new String[]{contact}
+            )) {
+                if (cursor.moveToFirst()) {
+                    int contactId = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
+                    ContentValues values = new ContentValues();
+                    values.put("contact_id", contactId);
+                    values.put("is_sender", isSender ? 1 : 0);
+                    values.put("message", message);
+                    values.put("sent_at", timestamp);
+
+                    long newRowId = db.insert("messages", null, values);
+
+                    if (newRowId == -1) {
+                        Log.e(TAG, "Error al guardar mensaje en la base de datos");
+                    } else {
+                        Log.d(TAG, "Mensaje guardado con ID: " + newRowId);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Excepción al almacenar mensaje", e);
+        } finally {
+            db.close();
+        }
     }
 }

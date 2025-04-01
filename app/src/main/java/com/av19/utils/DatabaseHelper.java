@@ -144,7 +144,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 "sent_at TEXT, " +
                 "FOREIGN KEY(contact_id) REFERENCES contacts(id)" +
                 ")");
-        insertSampleData(db);
+        /*insertSampleData(db);*/
     }
 
     @Override
