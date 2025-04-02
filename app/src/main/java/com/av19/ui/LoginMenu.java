@@ -24,6 +24,7 @@ import com.av19.R;
 import com.av19.models.api.ApiResponse;
 import com.av19.models.api.UserLogin;
 import com.av19.utils.ApiService;
+import com.av19.utils.BackgroundWebSocketService;
 import com.av19.utils.DatabaseHelper;
 import com.av19.utils.RetrofitClient;
 import com.av19.utils.SnackbarUtils;
@@ -127,7 +128,7 @@ public class LoginMenu extends BaseLocaleActivity {
                     SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
                     prefs.edit().putString("auth_token", username).apply();
 
-                    DatabaseHelper.setPassword(LoginMenu.this, password);
+                    DatabaseHelper.getInstance(LoginMenu.this, username).setPassword(password);
 
                     SnackbarUtils.showSuccess(
                             findViewById(android.R.id.content), LoginMenu.this, getString(R.string.snackbar_success_login)
@@ -152,6 +153,7 @@ public class LoginMenu extends BaseLocaleActivity {
     }
 
     private void navigateToContactsList() {
+        startService(new Intent(LoginMenu.this, BackgroundWebSocketService.class));
         Intent intent = new Intent(LoginMenu.this, ListContacts.class);
         intent.putExtra("login_success", true);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

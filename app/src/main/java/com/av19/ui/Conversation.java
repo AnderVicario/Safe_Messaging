@@ -96,6 +96,7 @@ public class Conversation extends BaseLocaleActivity {
         initListeners();
         refreshMessagesUI();
 
+        LocalBroadcastManager.getInstance(this).registerReceiver(newMessageReceiver, new IntentFilter("NEW_MESSAGE"));
         fetchMessages();
         Log.d("Conversation", "onCreate");
     }
@@ -105,7 +106,7 @@ public class Conversation extends BaseLocaleActivity {
         Log.d("Conversation", "onResume");
         super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(newMessageReceiver, new IntentFilter("NEW_MESSAGE"));
-        fetchMessages();
+        /*fetchMessages();*/
     }
 
     @Override
@@ -125,7 +126,7 @@ public class Conversation extends BaseLocaleActivity {
             if (sender != null && sender.equals(contactName)) {
                 Log.d("Conversation", "Mensaje recibido de " + contactName);
                 fetchMessages();
-                refreshMessagesUI();
+                /*refreshMessagesUI();*/
             }
         }
     };
@@ -291,7 +292,7 @@ public class Conversation extends BaseLocaleActivity {
             }
 
             JSONArray jsonArray = new JSONArray(stringBuilder.toString());
-            DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
+            DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
             SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
 
             try {
@@ -352,7 +353,7 @@ public class Conversation extends BaseLocaleActivity {
     }
 
     private void deleteChat() {
-        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
+        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
         SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
         db.delete("messages", "contact_id = ?", new String[]{contactId});
         db.close();
@@ -369,7 +370,7 @@ public class Conversation extends BaseLocaleActivity {
      */
     private List<Message> getMessagesFromDatabase() {
         List<Message> messages = new ArrayList<>();
-        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
+        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
         SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
 
         try {
@@ -415,7 +416,7 @@ public class Conversation extends BaseLocaleActivity {
      * Método centralizado para guardar mensajes.
      */
     private void storeMessageInDatabase(int contactId, boolean isSender, String message, String timestamp) {
-        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
+        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
         SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
 
         try {
@@ -454,7 +455,7 @@ public class Conversation extends BaseLocaleActivity {
      */
     private List<String> getLocalMessageTimestamps() {
         List<String> timestamps = new ArrayList<>();
-        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
+        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
         SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
 
         try {
@@ -491,7 +492,7 @@ public class Conversation extends BaseLocaleActivity {
      * @return ID del contacto o -1 si no se encuentra
      */
     private int getContactIdByName(String contactName) {
-        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
+        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
         SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
         int id = -1;
 

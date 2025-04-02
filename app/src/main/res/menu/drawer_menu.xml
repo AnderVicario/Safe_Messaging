@@ -13,6 +13,10 @@
                 android:id="@+id/nav_language"
                 android:icon="@drawable/ic_language"
                 android:title="@string/drawer_item_language" />
+            <item
+                android:id="@+id/nav_close_account"
+                android:icon="@drawable/ic_person"
+                android:title="@string/drawer_item_close_account" />
         </menu>
     </item>
     <item android:title="@string/drawer_item_other">

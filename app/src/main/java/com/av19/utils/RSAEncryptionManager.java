@@ -11,6 +11,8 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -18,26 +20,29 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class RSAEncryptionManager {
     private static final String KEYSTORE_PROVIDER = "AndroidKeyStore";
-    private static RSAEncryptionManager instance;
+    private static final Map<String, RSAEncryptionManager> instances = new HashMap<>();
     private PublicKey publicKey;
     private PrivateKey privateKey;
     public String publicKeyString;
 
-    public RSAEncryptionManager(Boolean createKeyPair, String myUsername) throws Exception {
+    private RSAEncryptionManager(boolean createKeyPair, String myUsername) throws Exception {
         if (createKeyPair) {
             generateRSAKeyPair(myUsername);
-        }
-        else {
+        } else {
             loadPrivateKey(myUsername);
             loadPublicKey(myUsername);
         }
     }
 
-    public static RSAEncryptionManager getInstance(Boolean createKeyPair, String myUsername) throws Exception {
-        if (instance == null){
-            instance = new RSAEncryptionManager(createKeyPair, myUsername);
+    public static synchronized RSAEncryptionManager getInstance(boolean createKeyPair, String myUsername) throws Exception {
+        if (!instances.containsKey(myUsername)) {
+            instances.put(myUsername, new RSAEncryptionManager(createKeyPair, myUsername));
         }
-        return instance;
+        return instances.get(myUsername);
+    }
+
+    public static synchronized void removeInstance(String myUsername) {
+        instances.remove(myUsername);
     }
 
     private void generateRSAKeyPair(String myUsername) throws Exception {
@@ -47,7 +52,10 @@ public class RSAEncryptionManager {
         keyStore.load(null);
 
         if (keyStore.containsAlias(alias)) {
-            return; // Si ya existe, no se genera de nuevo
+            // Si ya existe, cargar las claves para que la instancia tenga los valores correctos
+            loadPrivateKey(myUsername);
+            loadPublicKey(myUsername);
+            return;
         }
 
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, KEYSTORE_PROVIDER);

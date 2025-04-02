@@ -25,6 +25,7 @@ import com.av19.models.api.ApiResponse;
 import com.av19.models.api.PublicKeyResponse;
 import com.av19.models.api.UserCreate;
 import com.av19.utils.ApiService;
+import com.av19.utils.BackgroundWebSocketService;
 import com.av19.utils.DatabaseHelper;
 import com.av19.utils.RSAEncryptionManager;
 import com.av19.utils.RetrofitClient;
@@ -185,8 +186,9 @@ public class RegisterMenu extends BaseLocaleActivity {
                                 SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
                                 prefs.edit().putString("auth_token", username).apply();
 
-                                DatabaseHelper.setPassword(RegisterMenu.this, password1);
-                                DatabaseHelper.getInstance(RegisterMenu.this).registerUser(username, null, null);
+                                DatabaseHelper.getInstance(RegisterMenu.this, username).setPassword(password1);
+
+                                startService(new Intent(RegisterMenu.this, BackgroundWebSocketService.class));
 
                                 Intent intent = new Intent(RegisterMenu.this, LoginMenu.class);
                                 intent.putExtra("register_success", true);

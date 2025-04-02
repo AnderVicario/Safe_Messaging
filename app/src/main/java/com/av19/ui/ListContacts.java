@@ -39,7 +39,9 @@ import com.av19.models.ContactList;
 import com.av19.models.api.MessageResponse;
 import com.av19.utils.AESEncryptionManager;
 import com.av19.utils.ApiService;
+import com.av19.utils.BackgroundWebSocketService;
 import com.av19.utils.DatabaseHelper;
+import com.av19.utils.RSAEncryptionManager;
 import com.av19.utils.RetrofitClient;
 import com.av19.utils.SnackbarUtils;
 import com.av19.utils.WebSocketClient;
@@ -114,6 +116,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
         });
 
         // Conectar el WebSocket desde el manager
+        LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, new IntentFilter("NEW_MESSAGE"));
         fetchMessages();
         Log.d("ListContacts", "onCreate");
     }
@@ -131,7 +134,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
     protected void onResume() {
         super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, new IntentFilter("NEW_MESSAGE"));
-        fetchMessages();
+        /*fetchMessages();*/
     }
 
     @Override
@@ -248,6 +251,20 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             showThemeDialog();
         } else if (id == R.id.nav_about) {
             showAboutDialog();
+        } else if (id == R.id.nav_close_account) {
+            SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.remove("auth_token");
+            editor.apply();
+
+            stopService(new Intent(this, BackgroundWebSocketService.class));
+            DatabaseHelper.removeInstance(currentUser);
+            RSAEncryptionManager.removeInstance(currentUser);
+            ContactList.removeInstance(currentUser);
+
+            Intent intent = new Intent(this, SplashActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
         }
 
         drawerLayout.closeDrawer(GravityCompat.START);
@@ -387,7 +404,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
     }
 
     private void setUpRecyclerView() {
-        contactList = ContactList.getInstance(this);
+        contactList = ContactList.getInstance(this, currentUser);
         contactsAdapter = new ContactsAdapter(contactList, this);
         button_add = findViewById(R.id.button_add);
         recyclerView = findViewById(R.id.recyclerView);
@@ -409,7 +426,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
                         String newPublicKey = data.getStringExtra("new_public_key");
                         byte[] newContactPhoto = data.getByteArrayExtra("new_contact_photo");
                         if (newContactName != null && newPublicKey != null) {
-                            int index = ContactList.getInstance(this).addContact(newContactName, newPublicKey, newContactPhoto,this);
+                            int index = ContactList.getInstance(this, currentUser).addContact(newContactName, newPublicKey, newContactPhoto,this);
                             contactsAdapter.notifyItemInserted(index);
                             SnackbarUtils.showSuccess(
                                     findViewById(android.R.id.content),
@@ -424,7 +441,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
 
     @Override
     public void onContactEdited(int contactId, String newName, byte[] contactPhoto) {
-        ContactList.getInstance(this).updateContact(contactId, newName, contactPhoto);
+        ContactList.getInstance(this, currentUser).updateContact(contactId, newName, contactPhoto);
         for (Contact c : contactList.getContacts()) {
             if (c.getId() == contactId) {
                 c.setName(newName);
@@ -487,7 +504,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
 
     private List<String> getLocalMessageTimestamps() {
         List<String> timestamps = new ArrayList<>();
-        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
+        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
         SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
 
         try {
@@ -510,7 +527,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
     }
 
     private void storeMessageInDatabase(String contact, boolean isSender, String message, String timestamp) {
-        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
+        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
         SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
 
         try {

@@ -13,17 +13,19 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 
 public class ContactList {
-    private static ContactList myContactList;
+    private static final Map<String, ContactList> instances = new HashMap<>();
     private static List<Contact> contacts = new ArrayList<>();
     private DatabaseHelper dbHelper;
 
-    private ContactList(Context context) {
-        this.dbHelper = DatabaseHelper.getInstance(context);
+    private ContactList(Context context, String currentUser) {
+        this.dbHelper = DatabaseHelper.getInstance(context, currentUser);
         // Carga inicial de contactos
         loadContacts(context);
     }
@@ -106,11 +108,15 @@ public class ContactList {
         }
     }
 
-    public static ContactList getInstance(Context context) {
-        if (myContactList == null) {
-            myContactList = new ContactList(context);
+    public static synchronized ContactList getInstance(Context context, String currentUser) {
+        if (!instances.containsKey(currentUser)) {
+            instances.put(currentUser, new ContactList(context, currentUser));
         }
-        return myContactList;
+        return instances.get(currentUser);
+    }
+
+    public static synchronized void removeInstance(String currentUser) {
+        instances.remove(currentUser);
     }
 
     public List<Contact> getContacts() {

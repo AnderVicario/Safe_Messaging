@@ -53,4 +53,5 @@
     <string name="websocket_service">Umbra is receiving messages</string>
     <string name="websocket_message">New Message!</string>
     <string name="websocket_message_from">From</string>
+    <string name="drawer_item_close_account">Log Out</string>
 </resources>
