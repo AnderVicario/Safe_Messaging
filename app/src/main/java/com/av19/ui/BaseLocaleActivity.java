@@ -2,9 +2,9 @@ package com.av19.ui;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 
 import androidx.appcompat.app.AppCompatActivity;
-import android.content.res.Configuration;
 
 import java.util.Locale;
 

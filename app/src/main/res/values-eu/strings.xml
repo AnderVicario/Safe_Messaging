@@ -49,4 +49,7 @@
     <string name="snackbar_server_error_register">Ezin izan zara erregistratu.</string>
     <string name="snackbar_server_error_login">Ezin izan duzu saioa hasi.</string>
     <string name="snackbar_error_username_dontexist">Erabiltzailea ez da existitzen.</string>
+    <string name="websocket_service">Umbra mezuak jaisten ari da</string>
+    <string name="websocket_message">Mezu berria!</string>
+    <string name="websocket_message_from">Igorlea:</string>
 </resources>

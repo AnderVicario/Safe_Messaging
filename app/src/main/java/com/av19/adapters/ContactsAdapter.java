@@ -12,14 +12,12 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.av19.R;
 import com.av19.models.Contact;
 import com.av19.models.ContactList;
 import com.av19.ui.Conversation;
-import com.av19.ui.EditContactDialogFragment;
 
 public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> {
 

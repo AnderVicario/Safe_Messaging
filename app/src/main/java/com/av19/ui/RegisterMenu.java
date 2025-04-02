@@ -21,15 +21,14 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.av19.R;
+import com.av19.models.api.ApiResponse;
+import com.av19.models.api.PublicKeyResponse;
+import com.av19.models.api.UserCreate;
 import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
 import com.av19.utils.RSAEncryptionManager;
 import com.av19.utils.RetrofitClient;
 import com.av19.utils.SnackbarUtils;
-
-import com.av19.models.api.ApiResponse;
-import com.av19.models.api.PublicKeyResponse;
-import com.av19.models.api.UserCreate;
 
 import retrofit2.Call;
 import retrofit2.Callback;

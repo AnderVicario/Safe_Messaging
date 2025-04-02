@@ -49,4 +49,7 @@
     <string name="snackbar_server_error_register">Ha habido un error durante el registro.</string>
     <string name="snackbar_server_error_login">Ha habido un error durante el inicio de sesión.</string>
     <string name="snackbar_error_username_dontexist">Usuario no existente.</string>
+    <string name="websocket_service">Umbra está recibiendo mensajes</string>
+    <string name="websocket_message">Nuevo mensaje!</string>
+    <string name="websocket_message_from">De</string>
 </resources>

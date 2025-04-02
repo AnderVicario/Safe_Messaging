@@ -1,16 +1,13 @@
 package com.av19.ui;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
@@ -29,7 +26,6 @@ import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -38,7 +34,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.av19.R;
 import com.av19.adapters.MessagesAdapter;
-import com.av19.models.ContactList;
 import com.av19.models.Message;
 import com.av19.models.api.ApiResponse;
 import com.av19.models.api.MessageCreate;
@@ -47,7 +42,7 @@ import com.av19.utils.AESEncryptionManager;
 import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
 import com.av19.utils.RetrofitClient;
-import com.av19.utils.SnackbarUtils;
+import com.av19.utils.WebSocketClient;
 
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
@@ -100,23 +95,22 @@ public class Conversation extends BaseLocaleActivity {
         initToolbar();
         initListeners();
         refreshMessagesUI();
-        /*fetchMessages();*/
 
-        /*if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 11);
-        }*/
+        fetchMessages();
+        Log.d("Conversation", "onCreate");
     }
 
     @Override
     protected void onResume() {
+        Log.d("Conversation", "onResume");
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-                newMessageReceiver, new IntentFilter("NEW_MESSAGE")
-        );
+        LocalBroadcastManager.getInstance(this).registerReceiver(newMessageReceiver, new IntentFilter("NEW_MESSAGE"));
+        fetchMessages();
     }
 
     @Override
     protected void onPause() {
+        Log.d("Conversation", "onPause");
         LocalBroadcastManager.getInstance(this).unregisterReceiver(newMessageReceiver);
         super.onPause();
     }
@@ -124,9 +118,13 @@ public class Conversation extends BaseLocaleActivity {
     private BroadcastReceiver newMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.d("Conversation", "Mensaje recibido");
             String sender = intent.getStringExtra("sender");
             // Solo actualizamos si el sender coincide con el contacto actual
+            Log.d("Conversation", "Sender: " + sender  + ", Contact: " + contactName);
             if (sender != null && sender.equals(contactName)) {
+                Log.d("Conversation", "Mensaje recibido de " + contactName);
+                fetchMessages();
                 refreshMessagesUI();
             }
         }

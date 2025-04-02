@@ -1,10 +1,41 @@
 package com.av19.utils;
 
-import okhttp3.*;
+import android.content.Context;
+import android.content.Intent;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
 
 public class WebSocketClient extends WebSocketListener {
+    private static WebSocketClient instance;
     private WebSocket webSocket;
+    private OkHttpClient client;
     private OnMessageReceivedListener listener;
+    private Context appContext;
+
+    private WebSocketClient(Context context) {
+        client = UnsafeOkHttpsClient.getUnsafeOkHttpClient();
+        appContext = context.getApplicationContext();
+    }
+
+    public static synchronized WebSocketClient getInstance(Context context) {
+        if (instance == null) {
+            instance = new WebSocketClient(context);
+        }
+        return instance;
+    }
+
+    public void disconnectWebSocket() {
+        if (webSocket != null) {
+            webSocket.close(1000, "Cierre normal");
+            webSocket = null;
+        }
+    }
 
     // Definir la interfaz para el callback
     public interface OnMessageReceivedListener {
@@ -27,6 +58,9 @@ public class WebSocketClient extends WebSocketListener {
         if (listener != null) {
             listener.onMessageReceived(sender);
         }
+        Intent intent = new Intent("NEW_MESSAGE");
+        intent.putExtra("sender", sender);
+        LocalBroadcastManager.getInstance(appContext).sendBroadcast(intent);
     }
 
     @Override
@@ -35,8 +69,18 @@ public class WebSocketClient extends WebSocketListener {
     }
 
     public void connectWebSocket(String username) {
-        OkHttpClient client = UnsafeOkHttpsClient.getUnsafeOkHttpClient();
-        Request request = new Request.Builder().url("wss://umbra.ddns.net:8000/ws/" + username).build();
+        if (webSocket != null && isConnected()) {
+            System.out.println("WebSocket ya está conectado.");
+            return;
+        }
+
+        Request request = new Request.Builder()
+                .url("wss://umbra.ddns.net:8000/ws/" + username)
+                .build();
         webSocket = client.newWebSocket(request, this);
+    }
+
+    public boolean isConnected() {
+        return webSocket != null;
     }
 }

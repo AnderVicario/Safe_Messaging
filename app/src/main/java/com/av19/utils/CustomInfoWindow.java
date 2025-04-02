@@ -3,10 +3,12 @@ package com.av19.utils;
 import android.annotation.SuppressLint;
 import android.view.View;
 import android.widget.TextView;
+
+import com.av19.R;
+
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.infowindow.InfoWindow;
-import com.av19.R;
 
 public class CustomInfoWindow extends InfoWindow {
 

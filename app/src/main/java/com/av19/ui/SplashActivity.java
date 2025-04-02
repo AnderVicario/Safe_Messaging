@@ -5,8 +5,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+
+import com.av19.utils.BackgroundWebSocketService;
 
 @SuppressLint("CustomSplashScreen")
 public class SplashActivity extends BaseLocaleActivity {
@@ -26,6 +27,7 @@ public class SplashActivity extends BaseLocaleActivity {
         Intent intent;
         if (token != null) {
             intent = new Intent(this, ListContacts.class);
+            startService(new Intent(this, BackgroundWebSocketService.class));
         } else {
             intent = new Intent(this, LoginMenu.class);
         }

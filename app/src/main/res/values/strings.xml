@@ -50,4 +50,7 @@
     <string name="snackbar_server_error_register">Error during registration.</string>
     <string name="snackbar_server_error_login">Error during login.</string>
     <string name="snackbar_error_username_dontexist">Username does not exist.</string>
+    <string name="websocket_service">Umbra is receiving messages</string>
+    <string name="websocket_message">New Message!</string>
+    <string name="websocket_message_from">From</string>
 </resources>

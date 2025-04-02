@@ -1,9 +1,11 @@
 package com.av19.ui;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -13,19 +15,23 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import androidx.activity.EdgeToEdge;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-
+import com.av19.R;
+import com.av19.adapters.ContactsAdapter;
 import com.av19.models.Contact;
+import com.av19.models.ContactList;
 import com.av19.models.api.MessageResponse;
 import com.av19.utils.AESEncryptionManager;
 import com.av19.utils.ApiService;
@@ -34,22 +40,13 @@ import com.av19.utils.RetrofitClient;
 import com.av19.utils.SnackbarUtils;
 import com.av19.utils.WebSocketClient;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.av19.R;
-import com.av19.adapters.ContactsAdapter;
-import com.av19.models.ContactList;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -65,7 +62,6 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
     private static final String PREFS_NAME = "settings";
     private static final String KEY_THEME = "theme";
     private static final String KEY_LANG = "lang";
-    private WebSocketClient webSocketClient;
     private static final String TAG = "ListContacts";
 
     @Override
@@ -110,29 +106,32 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             }
         });
 
-        // Configurar y conectar el WebSocket
-        webSocketClient = new WebSocketClient();
-        webSocketClient.setOnMessageReceivedListener(new WebSocketClient.OnMessageReceivedListener() {
-            @Override
-            public void onMessageReceived(final String sender) {
-                // Puedes usar 'sender' para verificar o filtrar mensajes, si lo requieres.
-                // Llamamos a fetchMessages() para actualizar la UI.
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        fetchMessages();
-                    }
-                });
-            }
-        });
-        webSocketClient.connectWebSocket(currentUser);
+        // Conectar el WebSocket desde el manager
+        fetchMessages();
+        Log.d("ListContacts", "onCreate");
     }
+
+    private BroadcastReceiver messageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Actualiza la UI o refresca la lista de mensajes
+            Log.d("ListContacts", "Mensaje recibido");
+            fetchMessages();
+        }
+    };
 
     @Override
     protected void onResume() {
         super.onResume();
+        LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, new IntentFilter("NEW_MESSAGE"));
+        fetchMessages();
+    }
 
-        refreshMessagesUI();
+    @Override
+    protected void onPause() {
+        Log.d("ListContacts", "onPause");
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver);
+        super.onPause();
     }
 
     private void refreshMessagesUI() {
@@ -408,9 +407,6 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             boolean messageIsSender;
             messageIsSender = sender.equals(currentUser);
             storeMessageInDatabase(sender, messageIsSender, decryptedMessage, sentAtStr);
-            Intent intent = new Intent("NEW_MESSAGE");
-            intent.putExtra("sender", sender);
-            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
         }
         refreshMessagesUI();
     }
