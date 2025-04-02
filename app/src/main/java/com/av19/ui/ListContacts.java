@@ -9,11 +9,15 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
@@ -46,6 +50,8 @@ import com.google.android.material.navigation.NavigationView;
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -59,6 +65,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
     private DrawerLayout drawerLayout;
     private NavigationView navigationView;
     private String currentUser;
+    private ActivityResultLauncher<Intent> pickImageLauncher;
     private static final String PREFS_NAME = "settings";
     private static final String KEY_THEME = "theme";
     private static final String KEY_LANG = "lang";
@@ -160,6 +167,73 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
 
         // Configurar datos del usuario en el header del drawer
         View headerView = navigationView.getHeaderView(0);
+        ImageView user_profile_image = headerView.findViewById(R.id.user_profile_image);
+        user_profile_image.setImageResource(R.drawable.ic_launcher_background);
+        pickImageLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if(result.getResultCode() == Activity.RESULT_OK && result.getData() != null){
+                Uri imageUri = result.getData().getData();
+                try {
+                    // Load the original bitmap
+                    Bitmap originalBitmap = android.provider.MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+
+                    // Get the dimensions
+                    int width = originalBitmap.getWidth();
+                    int height = originalBitmap.getHeight();
+
+                    // Determine the square size (use the smaller dimension)
+                    int squareSize = Math.min(width, height);
+
+                    // Calculate cropping coordinates to get center of image
+                    int x = (width - squareSize) / 2;
+                    int y = (height - squareSize) / 2;
+
+                    // Create a square cropped bitmap (1:1 aspect ratio)
+                    Bitmap croppedBitmap = Bitmap.createBitmap(
+                            originalBitmap,
+                            x,
+                            y,
+                            squareSize,
+                            squareSize
+                    );
+
+                    // Scale down the image if it's too large
+                    int targetSize = 500; // You can adjust this target size as needed
+                    Bitmap scaledBitmap = Bitmap.createScaledBitmap(
+                            croppedBitmap,
+                            targetSize,
+                            targetSize,
+                            true
+                    );
+
+                    // Set the processed image to the ImageView
+                    user_profile_image.setImageBitmap(scaledBitmap);
+
+                    // Convert to byte array for storage
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream);
+                    byte[] userPhoto = stream.toByteArray();
+                    // Agregar para guardar la foto en la base de datos y actualizar el usuario en la API. Tambien se deberia cargar antes, y cargar la del resto de usuarios.
+
+                    // Recycle the bitmaps to free memory
+                    if (originalBitmap != croppedBitmap) {
+                        originalBitmap.recycle();
+                    }
+                    if (croppedBitmap != scaledBitmap) {
+                        croppedBitmap.recycle();
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast.makeText(ListContacts.this, "Failed to process image", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        user_profile_image.setOnLongClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            pickImageLauncher.launch(intent);
+            return true;
+        });
+
         TextView user_name = headerView.findViewById(R.id.user_name);
         user_name.setText(currentUser);
     }

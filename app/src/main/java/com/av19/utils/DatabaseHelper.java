@@ -147,6 +147,30 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
+    public void registerUser(String username, String publicKey, byte[] photo) {
+        SQLiteDatabase db = getEncryptedWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("name", username);
+        values.put("public_key", publicKey);
+        values.put("photo", photo);
+
+        db.insert("contacts", null, values);
+    }
+
+    public void updateUserPhoto(String username, byte[] newPhoto) {
+        SQLiteDatabase db = getEncryptedWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("photo", newPhoto);
+
+        int rowsUpdated = db.update("contacts", values, "name = ?", new String[]{username});
+
+        if (rowsUpdated == 0) {
+            throw new IllegalStateException("No se pudo actualizar la foto. Verifica que el usuario existe.");
+        }
+    }
+
     public void insertSampleData(SQLiteDatabase db) {
         // Insertar contacto de prueba
         ContentValues contactValues = new ContentValues();

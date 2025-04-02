@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     style="rounded_corners"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -16,9 +17,7 @@
         android:layout_marginTop="8dp"
         android:contentDescription="@string/nav_header_desc"
         app:shapeAppearanceOverlay="@style/rounded_corners"
-        android:background="@color/primary"
-        android:tint="@color/onPrimary"
-        app:srcCompat="@drawable/ic_person" />
+        tools:srcCompat="@drawable/ic_launcher_background" />
 
     <TextView
         android:id="@+id/user_name"

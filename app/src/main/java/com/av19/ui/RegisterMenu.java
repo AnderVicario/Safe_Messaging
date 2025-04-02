@@ -186,6 +186,7 @@ public class RegisterMenu extends BaseLocaleActivity {
                                 prefs.edit().putString("auth_token", username).apply();
 
                                 DatabaseHelper.setPassword(RegisterMenu.this, password1);
+                                DatabaseHelper.getInstance(RegisterMenu.this).registerUser(username, null, null);
 
                                 Intent intent = new Intent(RegisterMenu.this, LoginMenu.class);
                                 intent.putExtra("register_success", true);
