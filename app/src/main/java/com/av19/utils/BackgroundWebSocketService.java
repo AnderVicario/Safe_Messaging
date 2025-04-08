@@ -61,7 +61,17 @@ public class BackgroundWebSocketService extends Service {
         if (!webSocketClient.isConnected()) {
             webSocketClient.connectWebSocket(user);
         }
-        webSocketClient.setOnMessageReceivedListener(this::showNotification);
+        webSocketClient.setOnMessageReceivedListener(new WebSocketClient.OnMessageReceivedListener() {
+            @Override
+            public void onNewMessageReceived(String sender) {
+                showNotification(sender);
+            }
+
+            @Override
+            public void onProfileUpdated(String username) {
+                // implementar
+            }
+        });
     }
 
     @SuppressLint("ObsoleteSdkInt")

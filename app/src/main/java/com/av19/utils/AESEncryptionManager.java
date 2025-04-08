@@ -44,6 +44,10 @@ public class AESEncryptionManager {
         KeyStore keyStore = KeyStore.getInstance(KEYSTORE_PROVIDER);
         keyStore.load(null);
 
+        if (!keyStore.containsAlias(alias)) {
+            throw new IllegalArgumentException("Doesn't exist an AES key for user: " + contactUsername);
+        }
+
         KeyStore.SecretKeyEntry entry = (KeyStore.SecretKeyEntry) keyStore.getEntry(alias, null);
         return entry.getSecretKey();
     }

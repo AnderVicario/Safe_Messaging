@@ -5,6 +5,9 @@ import android.content.Intent;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -39,7 +42,8 @@ public class WebSocketClient extends WebSocketListener {
 
     // Definir la interfaz para el callback
     public interface OnMessageReceivedListener {
-        void onMessageReceived(String sender);
+        void onNewMessageReceived(String sender);
+        void onProfileUpdated(String username);
     }
 
     // Asignar el listener desde la Activity
@@ -53,14 +57,39 @@ public class WebSocketClient extends WebSocketListener {
     }
 
     @Override
-    public void onMessage(WebSocket webSocket, String sender) {
-        System.out.println("Nuevo mensaje recibido: " + sender);
-        if (listener != null) {
-            listener.onMessageReceived(sender);
+    public void onMessage(WebSocket webSocket, String jsonMessage) {
+        try {
+            JSONObject message = new JSONObject(jsonMessage);
+            String type = message.getString("type");
+
+            if (type.equals("new_message")) {
+                String sender = message.getString("sender");
+
+                if (listener != null) {
+                    listener.onNewMessageReceived(sender);
+                }
+
+                // Broadcast para mensajes
+                Intent messageIntent = new Intent("NEW_MESSAGE");
+                messageIntent.putExtra("sender", sender);
+                LocalBroadcastManager.getInstance(appContext).sendBroadcast(messageIntent);
+
+            } else if (type.equals("profile_updated")) {
+                String username = message.getString("username");
+
+                if (listener != null) {
+                    listener.onProfileUpdated(username);
+                }
+
+                // Broadcast para actualizaciones de perfil
+                Intent profileIntent = new Intent("PROFILE_UPDATED");
+                profileIntent.putExtra("username", username);
+                LocalBroadcastManager.getInstance(appContext).sendBroadcast(profileIntent);
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
-        Intent intent = new Intent("NEW_MESSAGE");
-        intent.putExtra("sender", sender);
-        LocalBroadcastManager.getInstance(appContext).sendBroadcast(intent);
     }
 
     @Override
