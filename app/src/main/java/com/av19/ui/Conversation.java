@@ -38,6 +38,7 @@ import com.av19.models.Message;
 import com.av19.models.api.ApiResponse;
 import com.av19.models.api.MessageCreate;
 import com.av19.models.api.RecieveMessageResponse;
+import com.av19.models.api.SendMessageResponse;
 import com.av19.utils.AESEncryptionManager;
 import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
@@ -543,9 +544,9 @@ public class Conversation extends BaseLocaleActivity {
         // Luego enviar a la API
         MessageCreate messageCreate = new MessageCreate(currentUser, contactName, encryptedMessage);
         ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
-        apiService.sendMessage(messageCreate).enqueue(new retrofit2.Callback<ApiResponse>() {
+        apiService.sendMessage(messageCreate).enqueue(new retrofit2.Callback<SendMessageResponse>() {
             @Override
-            public void onResponse(retrofit2.Call<ApiResponse> call, retrofit2.Response<ApiResponse> response) {
+            public void onResponse(retrofit2.Call<SendMessageResponse> call, retrofit2.Response<SendMessageResponse> response) {
                 if (!response.isSuccessful()) {
                     Log.e(TAG, "Error en la API: " + response.errorBody());
                     /*fetchMessages();*/
@@ -553,7 +554,7 @@ public class Conversation extends BaseLocaleActivity {
             }
 
             @Override
-            public void onFailure(retrofit2.Call<ApiResponse> call, Throwable t) {
+            public void onFailure(retrofit2.Call<SendMessageResponse> call, Throwable t) {
                 Log.e(TAG, "Fallo al enviar mensaje", t);
             }
         });
