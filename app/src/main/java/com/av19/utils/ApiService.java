@@ -2,14 +2,17 @@ package com.av19.utils;
 
 import com.av19.models.api.ApiResponse;
 import com.av19.models.api.MessageCreate;
-import com.av19.models.api.MessageResponse;
+import com.av19.models.api.RecieveMessageResponse;
+import com.av19.models.api.ProfilePictureResponse;
 import com.av19.models.api.PublicKeyResponse;
+import com.av19.models.api.SendMessageResponse;
 import com.av19.models.api.UpdateProfilePicture;
 import com.av19.models.api.UpdatePublicKey;
 import com.av19.models.api.UserCreate;
 import com.av19.models.api.UserLogin;
 
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
@@ -32,19 +35,23 @@ public interface ApiService {
     @GET("users/get_key/{username}")
     Call<PublicKeyResponse> getPublicKey(@Path("username") String username);
 
-    // Endpoint actualizar la imagen de perfil
-    @PUT("users/update_profile_picture")
-    Call<String> getPublicKey(@Body UpdateProfilePicture updateProfilePictureData);
+    // Endpoint para obtener la foto de un usuario
+    @GET("users/get_profile_picture/{username}")
+    Call<ProfilePictureResponse> getProfilePicture(@Path("username") String username);
 
     // Endpoint para actualizar la clave pública
     @PUT("users/update_key")
     Call<ApiResponse> updatePublicKey(@Body UpdatePublicKey updatePublicKeyData);
 
+    // Endpoint actualizar la imagen de perfil
+    @PUT("users/update_profile_picture")
+    Call<ApiResponse> updateProfilePicture(@Body UpdateProfilePicture updateProfilePictureData);
+
     // Endpoint para enviar un mensaje
     @POST("messages/send_message")
-    Call<ApiResponse> sendMessage(@Body MessageCreate messageCreateData);
+    Call<SendMessageResponse> sendMessage(@Body MessageCreate messageCreateData);
 
     // Endpoint para recibir mensajes de un usuario
     @GET("messages/receive_messages/{receiver}")
-    Call<List<MessageResponse>> getMessages(@Path("receiver") String receiver);
+    Call<List<RecieveMessageResponse>> getMessages(@Path("receiver") String receiver);
 }

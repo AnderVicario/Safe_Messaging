@@ -1,14 +1,14 @@
 package com.av19.models.api;
 
-public class MessageResponse {
+public class RecieveMessageResponse {
     private String sender;
     private String encrypted_message;
     private String timestamp;
     private Boolean is_initial;
 
-    public MessageResponse() { }
+    public RecieveMessageResponse() { }
 
-    public MessageResponse(String sender, String encrypted_message, String timestamp, Boolean is_initial) {
+    public RecieveMessageResponse(String sender, String encrypted_message, String timestamp, Boolean is_initial) {
         this.sender = sender;
         this.encrypted_message = encrypted_message;
         this.timestamp = timestamp;

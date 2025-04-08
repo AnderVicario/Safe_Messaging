@@ -37,12 +37,11 @@ import com.av19.adapters.MessagesAdapter;
 import com.av19.models.Message;
 import com.av19.models.api.ApiResponse;
 import com.av19.models.api.MessageCreate;
-import com.av19.models.api.MessageResponse;
+import com.av19.models.api.RecieveMessageResponse;
 import com.av19.utils.AESEncryptionManager;
 import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
 import com.av19.utils.RetrofitClient;
-import com.av19.utils.WebSocketClient;
 
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
@@ -593,9 +592,9 @@ public class Conversation extends BaseLocaleActivity {
      */
     private void fetchMessages() {
         ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
-        apiService.getMessages(currentUser).enqueue(new retrofit2.Callback<List<MessageResponse>>() {
+        apiService.getMessages(currentUser).enqueue(new retrofit2.Callback<List<RecieveMessageResponse>>() {
             @Override
-            public void onResponse(retrofit2.Call<List<MessageResponse>> call, retrofit2.Response<List<MessageResponse>> response) {
+            public void onResponse(retrofit2.Call<List<RecieveMessageResponse>> call, retrofit2.Response<List<RecieveMessageResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     processMessages(response.body());
                 } else {
@@ -604,7 +603,7 @@ public class Conversation extends BaseLocaleActivity {
             }
 
             @Override
-            public void onFailure(retrofit2.Call<List<MessageResponse>> call, Throwable t) {
+            public void onFailure(retrofit2.Call<List<RecieveMessageResponse>> call, Throwable t) {
                 Log.e(TAG, "Fallo al obtener mensajes", t);
             }
         });
@@ -615,11 +614,11 @@ public class Conversation extends BaseLocaleActivity {
      * Guarda todos los mensajes en la base de datos, pero solo actualiza
      * la UI si hay mensajes nuevos para la conversación actual.
      */
-    private void processMessages(List<MessageResponse> messagesResponse) {
+    private void processMessages(List<RecieveMessageResponse> messagesResponse) {
         List<String> localTimestamps = getLocalMessageTimestamps();
         boolean hasNewMessagesForCurrentContact = false;
 
-        for (MessageResponse mr : messagesResponse) {
+        for (RecieveMessageResponse mr : messagesResponse) {
             String sentAtStr = mr.getTimestamp();
             String sender = mr.getSender();
             String recipient = this.currentUser;

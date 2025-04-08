@@ -24,8 +24,9 @@ import androidx.core.view.WindowInsetsCompat;
 import com.av19.R;
 import com.av19.models.api.ApiResponse;
 import com.av19.models.api.MessageCreate;
-import com.av19.models.api.MessageResponse;
+import com.av19.models.api.RecieveMessageResponse;
 import com.av19.models.api.PublicKeyResponse;
+import com.av19.models.api.SendMessageResponse;
 import com.av19.utils.AESEncryptionManager;
 import com.av19.utils.ApiService;
 import com.av19.utils.RSAEncryptionManager;
@@ -162,12 +163,12 @@ public class AddContactForm extends BaseLocaleActivity {
                     String publicKey = response.body().getPublic_key();
 
                     // 2. Verificar si ya he recibido un mensaje inicial (la clave AES)
-                    apiService.getMessages(currentUser).enqueue(new Callback<List<MessageResponse>>() {
+                    apiService.getMessages(currentUser).enqueue(new Callback<List<RecieveMessageResponse>>() {
                         @Override
-                        public void onResponse(Call<List<MessageResponse>> call, Response<List<MessageResponse>> response) {
+                        public void onResponse(Call<List<RecieveMessageResponse>> call, Response<List<RecieveMessageResponse>> response) {
                             if (response.isSuccessful() && response.body() != null) {
-                                MessageResponse initialMessage = null;
-                                for (MessageResponse msg : response.body()) {
+                                RecieveMessageResponse initialMessage = null;
+                                for (RecieveMessageResponse msg : response.body()) {
                                     if (msg.getIs_initial()) {
                                         initialMessage = msg;
                                         break;
@@ -193,9 +194,9 @@ public class AddContactForm extends BaseLocaleActivity {
                                         MessageCreate messageCreate = new MessageCreate(currentUser, username, encryptedAESKey);
                                         ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
                                         SecretKey finalAesKey = aesKey;
-                                        apiService.sendMessage(messageCreate).enqueue(new retrofit2.Callback<ApiResponse>() {
+                                        apiService.sendMessage(messageCreate).enqueue(new retrofit2.Callback<SendMessageResponse>() {
                                             @Override
-                                            public void onResponse(retrofit2.Call<ApiResponse> call, retrofit2.Response<ApiResponse> response) {
+                                            public void onResponse(retrofit2.Call<SendMessageResponse> call, retrofit2.Response<SendMessageResponse> response) {
                                                 if (response.isSuccessful()) {
                                                     Log.e("AddContactForm", "AES enviado correctamente.");
                                                     try {
@@ -211,7 +212,7 @@ public class AddContactForm extends BaseLocaleActivity {
                                             }
 
                                             @Override
-                                            public void onFailure(retrofit2.Call<ApiResponse> call, Throwable t) {
+                                            public void onFailure(retrofit2.Call<SendMessageResponse> call, Throwable t) {
                                                 Log.e("AddContactForm", "Fallo al enviar la clave AES", t);
                                             }
                                         });
@@ -224,7 +225,7 @@ public class AddContactForm extends BaseLocaleActivity {
                             }
                         }
                         @Override
-                        public void onFailure(Call<List<MessageResponse>> call, Throwable t) {
+                        public void onFailure(Call<List<RecieveMessageResponse>> call, Throwable t) {
                             Log.e("AddContactForm", "Fallo al recibir los mensajes", t);
                         }
                     });

@@ -3,6 +3,7 @@ package com.av19.utils;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.util.Base64;
 
@@ -54,7 +55,7 @@ public class AESEncryptionManager {
         Cipher cipher = Cipher.getInstance(AES_TRANSFORMATION);
         cipher.init(Cipher.ENCRYPT_MODE, secretKey);
         byte[] iv = cipher.getIV();
-        byte[] encryptedBytes = cipher.doFinal(plainText.getBytes());
+        byte[] encryptedBytes = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
 
         // Combinar IV y mensaje cifrado
         byte[] combined = new byte[iv.length + encryptedBytes.length];
@@ -79,6 +80,6 @@ public class AESEncryptionManager {
         cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
         byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
 
-        return new String(decryptedBytes);
+        return new String(decryptedBytes, StandardCharsets.UTF_8);
     }
 }
