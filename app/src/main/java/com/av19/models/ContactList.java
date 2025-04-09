@@ -5,7 +5,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
 
+import com.av19.models.api.ProfilePictureResponse;
+import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
+import com.av19.utils.RetrofitClient;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
@@ -19,12 +22,18 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class ContactList {
     private static final Map<String, ContactList> instances = new HashMap<>();
     private static List<Contact> contacts = new ArrayList<>();
     private DatabaseHelper dbHelper;
+    private String currentUser;
 
     private ContactList(Context context, String currentUser) {
+        this.currentUser = currentUser;
         this.dbHelper = DatabaseHelper.getInstance(context, currentUser);
         // Carga inicial de contactos
         loadContacts(context);
@@ -60,6 +69,37 @@ public class ContactList {
         sortContacts();
         contactCursor.close();
         db.close();
+
+        // Para cada contacto, actualizar la foto usando la API, excepto el propio usuario
+        ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
+        for (Contact contact : contacts) {
+            if (!contact.getName().equals(currentUser)) {
+                Call<ProfilePictureResponse> call = apiService.getProfilePicture(contact.getName());
+                call.enqueue(new Callback<ProfilePictureResponse>() {
+                    @Override
+                    public void onResponse(Call<ProfilePictureResponse> call, Response<ProfilePictureResponse> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            String profilePictureBase64 = response.body().getProfile_picture();
+                            if (profilePictureBase64 != null) {
+                                try {
+                                    byte[] updatedPhoto = java.util.Base64.getDecoder().decode(profilePictureBase64);
+                                    contact.setPhoto(updatedPhoto);
+                                } catch (IllegalArgumentException e) {
+                                    Log.e("ContactList", "Error decoding profile picture for " + contact.getName(), e);
+                                }
+                            }
+                        } else {
+                            Log.e("ContactList", "No se pudo obtener la foto de " + contact.getName());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ProfilePictureResponse> call, Throwable t) {
+                        Log.e("ContactList", "Error fetching updated photo for contact: " + contact.getName(), t);
+                    }
+                });
+            }
+        }
     }
 
     // Método para cargar los mensajes asociados a un contacto

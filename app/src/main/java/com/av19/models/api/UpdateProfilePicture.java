@@ -3,11 +3,11 @@ package com.av19.models.api;
 public class UpdateProfilePicture {
     private String username;
     private String password;
-    private byte[] profile_picture;
+    private String  profile_picture;
 
     public UpdateProfilePicture() { }
 
-    public UpdateProfilePicture(String username, String password, byte[] profile_picture) {
+    public UpdateProfilePicture(String username, String password, String profile_picture) {
         this.username = username;
         this.password = password;
         this.profile_picture = profile_picture;
@@ -29,11 +29,11 @@ public class UpdateProfilePicture {
         this.password = password;
     }
 
-    public byte[] getProfile_picture() {
+    public String getProfile_picture() {
         return profile_picture;
     }
 
-    public void setProfile_picture(byte[] profile_picture) {
+    public void setProfile_picture(String profile_picture) {
         this.profile_picture = profile_picture;
     }
 }

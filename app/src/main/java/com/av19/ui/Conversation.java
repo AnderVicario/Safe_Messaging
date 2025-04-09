@@ -526,7 +526,7 @@ public class Conversation extends BaseLocaleActivity {
         String encryptedMessage;
         try {
             encryptedMessage = AESEncryptionManager.encryptText(messageText,
-                    AESEncryptionManager.getAESKey(contactName));
+                    AESEncryptionManager.getAESKey(this, contactName));
         } catch (Exception e) {
             Log.e(TAG, "Error de encriptación", e);
             return;
@@ -633,7 +633,7 @@ public class Conversation extends BaseLocaleActivity {
             try {
                 decryptedMessage = AESEncryptionManager.decryptText(
                         mr.getEncrypted_message(),
-                        AESEncryptionManager.getAESKey(sender)
+                        AESEncryptionManager.getAESKey(this, sender)
                 );
             } catch (Exception e) {
                 Log.e(TAG, "Error de desencriptación", e);

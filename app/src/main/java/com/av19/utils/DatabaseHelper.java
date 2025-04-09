@@ -91,36 +91,46 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
+    public String getDecryptedPassword() {
+        try {
+            // Obtener el KeyStore y cargar la clave secreta
+            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null);
+            KeyStore.SecretKeyEntry entry = (KeyStore.SecretKeyEntry) keyStore.getEntry(dbPasswordAlias, null);
+            SecretKey secretKey = entry.getSecretKey();
+
+            // Recuperar el texto cifrado y el IV almacenado en SharedPreferences
+            SharedPreferences prefs = context.getSharedPreferences("db_prefs", Context.MODE_PRIVATE);
+            String encryptedPassword = prefs.getString(prefPasswordKey, null);
+            String ivString = prefs.getString(prefIvKey, null);
+            if (encryptedPassword == null || ivString == null) {
+                throw new IllegalStateException("Password not found in secure storage");
+            }
+
+            // Decodificar los valores en Base64
+            byte[] ciphertext = Base64.getDecoder().decode(encryptedPassword);
+            byte[] iv = Base64.getDecoder().decode(ivString);
+
+            // Inicializar el Cipher en modo descifrado con el IV
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            GCMParameterSpec spec = new GCMParameterSpec(128, iv);
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, spec);
+
+            // Obtener la contraseña en bytes y convertirla a String
+            byte[] passwordBytes = cipher.doFinal(ciphertext);
+            return new String(passwordBytes, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to decrypt password", e);
+        }
+    }
+
     /**
      * Recupera la contraseña almacenada cifrada y la utiliza para abrir la base de datos.
      */
     public synchronized SQLiteDatabase getEncryptedWritableDatabase() {
         if (database == null || !database.isOpen()) {
-            try {
-                KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
-                keyStore.load(null);
-                KeyStore.SecretKeyEntry entry = (KeyStore.SecretKeyEntry) keyStore.getEntry(dbPasswordAlias, null);
-                SecretKey secretKey = entry.getSecretKey();
-
-                SharedPreferences prefs = context.getSharedPreferences("db_prefs", Context.MODE_PRIVATE);
-                String encryptedPassword = prefs.getString(prefPasswordKey, null);
-                String ivString = prefs.getString(prefIvKey, null);
-                if (encryptedPassword == null || ivString == null) {
-                    throw new IllegalStateException("Password not found in secure storage");
-                }
-                byte[] ciphertext = Base64.getDecoder().decode(encryptedPassword);
-                byte[] iv = Base64.getDecoder().decode(ivString);
-
-                Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-                GCMParameterSpec spec = new GCMParameterSpec(128, iv);
-                cipher.init(Cipher.DECRYPT_MODE, secretKey, spec);
-                byte[] passwordBytes = cipher.doFinal(ciphertext);
-                String password = new String(passwordBytes, StandardCharsets.UTF_8);
-
-                database = super.getWritableDatabase(password);
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to open database", e);
-            }
+            String password = getDecryptedPassword();
+            database = super.getWritableDatabase(password);
         }
         return database;
     }
@@ -136,17 +146,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS messages");
         db.execSQL("DROP TABLE IF EXISTS contacts");
         onCreate(db);
-    }
-
-    public void registerUser(String username, String publicKey, byte[] photo) {
-        SQLiteDatabase db = getEncryptedWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put("name", username);
-        values.put("public_key", publicKey);
-        values.put("photo", photo);
-
-        db.insert("contacts", null, values);
     }
 
     public void updateUserPhoto(String username, byte[] newPhoto) {

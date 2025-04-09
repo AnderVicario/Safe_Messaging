@@ -178,7 +178,7 @@ public class AddContactForm extends BaseLocaleActivity {
                                     String encryptedAESKey = initialMessage.getEncrypted_message();
                                     try {
                                         SecretKey aesKey = RSAEncryptionManager.getInstance(Boolean.FALSE, currentUser).decryptAESKeyWithRSA(encryptedAESKey);
-                                        AESEncryptionManager.storeAESKey(username, aesKey);
+                                        AESEncryptionManager.storeAESKey(AddContactForm.this, username, aesKey);
                                     }
                                     catch (Exception e){
                                         Log.e("AddContactForm", "Error al desencriptar y guardar la clave AES");
@@ -200,7 +200,7 @@ public class AddContactForm extends BaseLocaleActivity {
                                                 if (response.isSuccessful()) {
                                                     Log.e("AddContactForm", "AES enviado correctamente.");
                                                     try {
-                                                        AESEncryptionManager.storeAESKey(username, finalAesKey);
+                                                        AESEncryptionManager.storeAESKey(AddContactForm.this, username, finalAesKey);
                                                     }
                                                     catch (Exception e){
                                                         Log.e("AddContactForm", "Error al guardar la clave AES");

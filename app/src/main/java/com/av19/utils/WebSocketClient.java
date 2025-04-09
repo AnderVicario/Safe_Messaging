@@ -74,19 +74,8 @@ public class WebSocketClient extends WebSocketListener {
                 messageIntent.putExtra("sender", sender);
                 LocalBroadcastManager.getInstance(appContext).sendBroadcast(messageIntent);
 
-            } else if (type.equals("profile_updated")) {
-                String username = message.getString("username");
-
-                if (listener != null) {
-                    listener.onProfileUpdated(username);
-                }
-
-                // Broadcast para actualizaciones de perfil
-                Intent profileIntent = new Intent("PROFILE_UPDATED");
-                profileIntent.putExtra("username", username);
-                LocalBroadcastManager.getInstance(appContext).sendBroadcast(profileIntent);
             }
-
+            // Otras actualizaciónes para el futuro
         } catch (JSONException e) {
             e.printStackTrace();
         }

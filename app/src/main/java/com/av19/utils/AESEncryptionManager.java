@@ -1,5 +1,7 @@
 package com.av19.utils;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
 
@@ -11,10 +13,11 @@ import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 public class AESEncryptionManager {
-    private static final String KEYSTORE_PROVIDER = "AndroidKeyStore";
     private static final String AES_TRANSFORMATION = "AES/CBC/PKCS7Padding";
+    private static final String PREFS_NAME = "AESKeys";
 
     public static SecretKey generateAESKey() throws Exception {
         KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
@@ -22,34 +25,26 @@ public class AESEncryptionManager {
         return keyGenerator.generateKey();
     }
 
-    public static void storeAESKey(String contactUsername, SecretKey aesKey) throws Exception {
+    public static void storeAESKey(Context context, String contactUsername, SecretKey aesKey) {
         String alias = contactUsername + "_AESKey";
+        String encodedKey = Base64.getEncoder().encodeToString(aesKey.getEncoded());
 
-        KeyStore keyStore = KeyStore.getInstance(KEYSTORE_PROVIDER);
-        keyStore.load(null);
-
-        KeyProtection protectionParams = new KeyProtection.Builder(KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
-                .setBlockModes(KeyProperties.BLOCK_MODE_CBC) // Coincide con AES/CBC/PKCS5Padding
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-                .build();
-
-        KeyStore.SecretKeyEntry secretKeyEntry = new KeyStore.SecretKeyEntry(aesKey);
-
-        keyStore.setEntry(alias, secretKeyEntry, protectionParams);
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        prefs.edit().putString(alias, encodedKey).apply();
     }
 
-    public static SecretKey getAESKey(String contactUsername) throws Exception {
+    public static SecretKey getAESKey(Context context, String contactUsername) {
         String alias = contactUsername + "_AESKey";
 
-        KeyStore keyStore = KeyStore.getInstance(KEYSTORE_PROVIDER);
-        keyStore.load(null);
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String encodedKey = prefs.getString(alias, null);
 
-        if (!keyStore.containsAlias(alias)) {
+        if (encodedKey == null) {
             throw new IllegalArgumentException("Doesn't exist an AES key for user: " + contactUsername);
         }
 
-        KeyStore.SecretKeyEntry entry = (KeyStore.SecretKeyEntry) keyStore.getEntry(alias, null);
-        return entry.getSecretKey();
+        byte[] decodedKey = Base64.getDecoder().decode(encodedKey);
+        return new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
     }
 
     public static String encryptText(String plainText, SecretKey secretKey) throws Exception {

@@ -53,4 +53,6 @@
     <string name="websocket_message">Mezu berria!</string>
     <string name="websocket_message_from">Igorlea:</string>
     <string name="drawer_item_close_account">Saioa itxi</string>
+    <string name="snackbar_success_update_profile_picture">Irudia eguneratu egin da.</string>
+    <string name="snackbar_error_update_profile_picture">Ezin izan da irudia eguneratu.</string>
 </resources>

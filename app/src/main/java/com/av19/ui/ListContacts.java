@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -36,7 +37,9 @@ import com.av19.R;
 import com.av19.adapters.ContactsAdapter;
 import com.av19.models.Contact;
 import com.av19.models.ContactList;
+import com.av19.models.api.ApiResponse;
 import com.av19.models.api.RecieveMessageResponse;
+import com.av19.models.api.UpdateProfilePicture;
 import com.av19.utils.AESEncryptionManager;
 import com.av19.utils.ApiService;
 import com.av19.utils.BackgroundWebSocketService;
@@ -54,8 +57,13 @@ import net.sqlcipher.database.SQLiteDatabase;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ListContacts extends BaseLocaleActivity implements NavigationView.OnNavigationItemSelectedListener, EditContactDialogFragment.EditContactDialogListener {
 
@@ -170,26 +178,28 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
         // Configurar datos del usuario en el header del drawer
         View headerView = navigationView.getHeaderView(0);
         ImageView user_profile_image = headerView.findViewById(R.id.user_profile_image);
-        user_profile_image.setImageResource(R.drawable.ic_launcher_background);
+
+        SharedPreferences prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        String encodedImage = prefs.getString("profile_picture", null);
+        if (encodedImage != null) {
+            Bitmap savedBitmap = decodeBitmapFromBase64(encodedImage);
+            if(savedBitmap != null) {
+                user_profile_image.setImageBitmap(savedBitmap);
+            }
+        } else {
+            user_profile_image.setImageResource(R.drawable.ic_launcher_background);
+        }
+
         pickImageLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if(result.getResultCode() == Activity.RESULT_OK && result.getData() != null){
                 Uri imageUri = result.getData().getData();
                 try {
-                    // Load the original bitmap
                     Bitmap originalBitmap = android.provider.MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-
-                    // Get the dimensions
                     int width = originalBitmap.getWidth();
                     int height = originalBitmap.getHeight();
-
-                    // Determine the square size (use the smaller dimension)
                     int squareSize = Math.min(width, height);
-
-                    // Calculate cropping coordinates to get center of image
                     int x = (width - squareSize) / 2;
                     int y = (height - squareSize) / 2;
-
-                    // Create a square cropped bitmap (1:1 aspect ratio)
                     Bitmap croppedBitmap = Bitmap.createBitmap(
                             originalBitmap,
                             x,
@@ -197,26 +207,25 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
                             squareSize,
                             squareSize
                     );
-
-                    // Scale down the image if it's too large
-                    int targetSize = 500; // You can adjust this target size as needed
+                    int targetSize = 500;
                     Bitmap scaledBitmap = Bitmap.createScaledBitmap(
                             croppedBitmap,
                             targetSize,
                             targetSize,
                             true
                     );
-
-                    // Set the processed image to the ImageView
                     user_profile_image.setImageBitmap(scaledBitmap);
 
-                    // Convert to byte array for storage
+                    // Guardar la imagen en SharedPreferences
+                    String newEncodedImage = encodeBitmapToBase64(scaledBitmap);
+                    prefs.edit().putString("profile_picture", newEncodedImage).apply();
+
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
                     scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream);
                     byte[] userPhoto = stream.toByteArray();
-                    // Agregar para guardar la foto en la base de datos y actualizar el usuario en la API. Tambien se deberia cargar antes, y cargar la del resto de usuarios.
+                    String photoBase64 = Base64.getEncoder().encodeToString(userPhoto);
 
-                    // Recycle the bitmaps to free memory
+                    // Liberar recursos de Bitmaps
                     if (originalBitmap != croppedBitmap) {
                         originalBitmap.recycle();
                     }
@@ -224,12 +233,39 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
                         croppedBitmap.recycle();
                     }
 
+                    // Crear la solicitud para actualizar la foto de perfil
+                    UpdateProfilePicture updatePicRequest = new UpdateProfilePicture(currentUser, DatabaseHelper.getInstance(this, currentUser).getDecryptedPassword(), photoBase64);
+                    ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
+                    Call<ApiResponse> call = apiService.updateProfilePicture(updatePicRequest);
+                    call.enqueue(new Callback<ApiResponse>() {
+                        @Override
+                        public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
+                            if(response.isSuccessful()){
+                                SnackbarUtils.showSuccess(
+                                        findViewById(android.R.id.content), ListContacts.this, getString(R.string.snackbar_success_update_profile_picture)
+                                );
+                            } else {
+                                SnackbarUtils.showError(
+                                        findViewById(android.R.id.content), ListContacts.this, getString(R.string.snackbar_error_update_profile_picture)
+                                );
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<ApiResponse> call, Throwable t) {
+                            SnackbarUtils.showError(
+                                    findViewById(android.R.id.content), ListContacts.this, getString(R.string.snackbar_error_update_profile_picture)
+                            );
+                        }
+                    });
+
                 } catch (IOException e) {
                     e.printStackTrace();
                     Toast.makeText(ListContacts.this, "Failed to process image", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+
         user_profile_image.setOnLongClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             pickImageLauncher.launch(intent);
@@ -487,7 +523,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             try {
                 decryptedMessage = AESEncryptionManager.decryptText(
                         mr.getEncrypted_message(),
-                        AESEncryptionManager.getAESKey(sender)
+                        AESEncryptionManager.getAESKey(this, sender)
                 );
             } catch (Exception e) {
                 Log.e(TAG, "Error de desencriptación", e);
@@ -555,6 +591,25 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             Log.e(TAG, "Excepción al almacenar mensaje", e);
         } finally {
             db.close();
+        }
+    }
+
+    // Convertir un Bitmap a una cadena Base64
+    private static String encodeBitmapToBase64(Bitmap bitmap) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream);
+        byte[] byteArray = outputStream.toByteArray();
+        return Base64.getEncoder().encodeToString(byteArray);
+    }
+
+    // Convertir una cadena Base64 a Bitmap
+    private static Bitmap decodeBitmapFromBase64(String base64String) {
+        try {
+            byte[] decodedBytes = Base64.getDecoder().decode(base64String);
+            return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

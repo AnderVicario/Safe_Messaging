@@ -53,4 +53,6 @@
     <string name="websocket_message">Nuevo mensaje!</string>
     <string name="websocket_message_from">De</string>
     <string name="drawer_item_close_account">Cerrar sesión</string>
+    <string name="snackbar_success_update_profile_picture">Se ha actualizado la foto de perfil.</string>
+    <string name="snackbar_error_update_profile_picture">Ha habido un error durante la actualización de la foto de perfil.</string>
 </resources>
