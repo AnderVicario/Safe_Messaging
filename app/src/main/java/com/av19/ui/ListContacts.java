@@ -122,6 +122,24 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             }
         });
 
+        contactList.setOnContactPhotoUpdatedListener(new ContactList.OnContactPhotoUpdatedListener() {
+            @Override
+            public void onContactPhotoUpdated(Contact updatedContact) {
+                // Buscar la posición del contacto actualizado
+                int position = -1;
+                for (int i = 0; i < contactList.getContacts().size(); i++) {
+                    if (contactList.getContacts().get(i).getId() == updatedContact.getId()) {
+                        position = i;
+                        break;
+                    }
+                }
+                if (position != -1) {
+                    // Actualizar solo ese elemento en el RecyclerView
+                    contactsAdapter.notifyItemChanged(position);
+                }
+            }
+        });
+
         // Conectar el WebSocket desde el manager
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, new IntentFilter("NEW_MESSAGE"));
         fetchMessages();

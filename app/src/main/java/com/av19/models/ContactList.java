@@ -31,6 +31,7 @@ public class ContactList {
     private static List<Contact> contacts = new ArrayList<>();
     private DatabaseHelper dbHelper;
     private String currentUser;
+    private OnContactPhotoUpdatedListener photoUpdateListener;
 
     private ContactList(Context context, String currentUser) {
         this.currentUser = currentUser;
@@ -84,6 +85,9 @@ public class ContactList {
                                 try {
                                     byte[] updatedPhoto = java.util.Base64.getDecoder().decode(profilePictureBase64);
                                     contact.setPhoto(updatedPhoto);
+                                    if (photoUpdateListener != null) {
+                                        photoUpdateListener.onContactPhotoUpdated(contact);
+                                    }
                                 } catch (IllegalArgumentException e) {
                                     Log.e("ContactList", "Error decoding profile picture for " + contact.getName(), e);
                                 }
@@ -209,5 +213,13 @@ public class ContactList {
 
             return date2.compareTo(date1);
         });
+    }
+
+    public interface OnContactPhotoUpdatedListener {
+        void onContactPhotoUpdated(Contact contact);
+    }
+
+    public void setOnContactPhotoUpdatedListener(OnContactPhotoUpdatedListener listener) {
+        this.photoUpdateListener = listener;
     }
 }
