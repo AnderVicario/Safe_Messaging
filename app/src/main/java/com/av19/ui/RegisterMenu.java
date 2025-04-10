@@ -27,11 +27,8 @@ import com.av19.models.api.UserCreate;
 import com.av19.utils.ApiService;
 import com.av19.utils.BackgroundWebSocketService;
 import com.av19.utils.DatabaseHelper;
-import com.av19.utils.RSAEncryptionManager;
 import com.av19.utils.RetrofitClient;
 import com.av19.utils.SnackbarUtils;
-
-import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -120,7 +117,7 @@ public class RegisterMenu extends BaseLocaleActivity {
         TextView textLogin = findViewById(R.id.tv_toggle_reg_login);
 
         registerButton.setOnClickListener(v -> performRegister());
-        textLogin.setOnClickListener(v -> startActivity(new Intent(this, ListContacts.class)));
+        textLogin.setOnClickListener(v -> startActivity(new Intent(this, LoginMenu.class)));
     }
 
     private void performRegister() {
@@ -169,17 +166,9 @@ public class RegisterMenu extends BaseLocaleActivity {
                     usernameInput.setTextColor(ContextCompat.getColor(RegisterMenu.this, R.color.error));
                 }
                 else {
-                    // Crear par de llaves
-                    String publicKey = null;
-                    try {
-                        publicKey = RSAEncryptionManager.getInstance(Boolean.TRUE, username).publicKeyString;
-                    } catch (Exception e){
-                        e.printStackTrace();
-                    }
-
                     // 2. Llamada a la API para registrar el usuario
                     ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
-                    UserCreate userCreateData = new UserCreate(username, password1, publicKey);
+                    UserCreate userCreateData = new UserCreate(username, password1, "dummy");
                     Call<ApiResponse> registerCall = apiService.registerUser(userCreateData);
                     registerCall.enqueue(new Callback<ApiResponse>() {
                         @Override

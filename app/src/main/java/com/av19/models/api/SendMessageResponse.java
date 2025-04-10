@@ -1,5 +1,4 @@
 package com.av19.models.api;
-import java.util.Date;
 
 public class SendMessageResponse {
     public String message;

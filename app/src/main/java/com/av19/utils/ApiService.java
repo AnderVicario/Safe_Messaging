@@ -2,9 +2,9 @@ package com.av19.utils;
 
 import com.av19.models.api.ApiResponse;
 import com.av19.models.api.MessageCreate;
-import com.av19.models.api.RecieveMessageResponse;
 import com.av19.models.api.ProfilePictureResponse;
 import com.av19.models.api.PublicKeyResponse;
+import com.av19.models.api.RecieveMessageResponse;
 import com.av19.models.api.SendMessageResponse;
 import com.av19.models.api.UpdateProfilePicture;
 import com.av19.models.api.UpdatePublicKey;
@@ -12,7 +12,6 @@ import com.av19.models.api.UserCreate;
 import com.av19.models.api.UserLogin;
 
 import java.util.List;
-import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.http.Body;

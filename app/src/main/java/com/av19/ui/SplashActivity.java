@@ -4,10 +4,19 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.appcompat.app.AppCompatDelegate;
 
+import com.av19.models.Contact;
+import com.av19.models.api.ProfilePictureResponse;
+import com.av19.utils.ApiService;
 import com.av19.utils.BackgroundWebSocketService;
+import com.av19.utils.RetrofitClient;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 @SuppressLint("CustomSplashScreen")
 public class SplashActivity extends BaseLocaleActivity {

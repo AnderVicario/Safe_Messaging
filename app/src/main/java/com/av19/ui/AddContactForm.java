@@ -22,22 +22,13 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.av19.R;
-import com.av19.models.api.ApiResponse;
-import com.av19.models.api.MessageCreate;
-import com.av19.models.api.RecieveMessageResponse;
 import com.av19.models.api.PublicKeyResponse;
-import com.av19.models.api.SendMessageResponse;
-import com.av19.utils.AESEncryptionManager;
 import com.av19.utils.ApiService;
-import com.av19.utils.RSAEncryptionManager;
 import com.av19.utils.RetrofitClient;
 import com.av19.utils.SnackbarUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.List;
-
-import javax.crypto.SecretKey;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -161,74 +152,6 @@ public class AddContactForm extends BaseLocaleActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     // Usuario existe, obtener su clave pública
                     String publicKey = response.body().getPublic_key();
-
-                    // 2. Verificar si ya he recibido un mensaje inicial (la clave AES)
-                    apiService.getMessages(currentUser).enqueue(new Callback<List<RecieveMessageResponse>>() {
-                        @Override
-                        public void onResponse(Call<List<RecieveMessageResponse>> call, Response<List<RecieveMessageResponse>> response) {
-                            if (response.isSuccessful() && response.body() != null) {
-                                RecieveMessageResponse initialMessage = null;
-                                for (RecieveMessageResponse msg : response.body()) {
-                                    if (msg.getIs_initial()) {
-                                        initialMessage = msg;
-                                        break;
-                                    }
-                                }
-                                if (initialMessage != null) {
-                                    String encryptedAESKey = initialMessage.getEncrypted_message();
-                                    try {
-                                        SecretKey aesKey = RSAEncryptionManager.getInstance(Boolean.FALSE, currentUser).decryptAESKeyWithRSA(encryptedAESKey);
-                                        AESEncryptionManager.storeAESKey(AddContactForm.this, username, aesKey);
-                                    }
-                                    catch (Exception e){
-                                        Log.e("AddContactForm", "Error al desencriptar y guardar la clave AES");
-                                        e.printStackTrace();
-                                    }
-                                }
-                                else {
-                                    // 3. Genera la clave AES
-                                    SecretKey aesKey = null;
-                                    try {
-                                        aesKey = AESEncryptionManager.generateAESKey();
-                                        String encryptedAESKey = RSAEncryptionManager.getInstance(Boolean.FALSE, currentUser).encryptAESKeyWithRSA(aesKey, publicKey);
-                                        MessageCreate messageCreate = new MessageCreate(currentUser, username, encryptedAESKey);
-                                        ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
-                                        SecretKey finalAesKey = aesKey;
-                                        apiService.sendMessage(messageCreate).enqueue(new retrofit2.Callback<SendMessageResponse>() {
-                                            @Override
-                                            public void onResponse(retrofit2.Call<SendMessageResponse> call, retrofit2.Response<SendMessageResponse> response) {
-                                                if (response.isSuccessful()) {
-                                                    Log.e("AddContactForm", "AES enviado correctamente.");
-                                                    try {
-                                                        AESEncryptionManager.storeAESKey(AddContactForm.this, username, finalAesKey);
-                                                    }
-                                                    catch (Exception e){
-                                                        Log.e("AddContactForm", "Error al guardar la clave AES");
-                                                        e.printStackTrace();
-                                                    }
-                                                } else {
-                                                    Log.e("AddContactForm", "Error en la respuesta de la API: " + response.errorBody());
-                                                }
-                                            }
-
-                                            @Override
-                                            public void onFailure(retrofit2.Call<SendMessageResponse> call, Throwable t) {
-                                                Log.e("AddContactForm", "Fallo al enviar la clave AES", t);
-                                            }
-                                        });
-                                    }
-                                    catch (Exception e) {
-                                        Log.e("AddContactForm", "Error al generar la clave AES");
-                                        e.printStackTrace();
-                                    }
-                                }
-                            }
-                        }
-                        @Override
-                        public void onFailure(Call<List<RecieveMessageResponse>> call, Throwable t) {
-                            Log.e("AddContactForm", "Fallo al recibir los mensajes", t);
-                        }
-                    });
                     returnResult(username, publicKey);
                 }
                 else {

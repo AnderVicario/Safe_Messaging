@@ -3,8 +3,10 @@ package com.av19.utils;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
+
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
+
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.util.Base64;

@@ -2,15 +2,9 @@ package com.av19;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.Application;
-import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-
-import com.av19.utils.BackgroundWebSocketService;
-import com.av19.utils.WebSocketClient;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

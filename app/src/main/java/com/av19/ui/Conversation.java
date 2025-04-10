@@ -35,11 +35,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.av19.R;
 import com.av19.adapters.MessagesAdapter;
 import com.av19.models.Message;
-import com.av19.models.api.ApiResponse;
 import com.av19.models.api.MessageCreate;
 import com.av19.models.api.RecieveMessageResponse;
 import com.av19.models.api.SendMessageResponse;
-import com.av19.utils.AESEncryptionManager;
 import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
 import com.av19.utils.RetrofitClient;
@@ -523,14 +521,8 @@ public class Conversation extends BaseLocaleActivity {
      * Encripta, envía mediante API y almacena el mensaje localmente.
      */
     private void sendAndStoreMessage(String messageText) {
-        String encryptedMessage;
-        try {
-            encryptedMessage = AESEncryptionManager.encryptText(messageText,
-                    AESEncryptionManager.getAESKey(this, contactName));
-        } catch (Exception e) {
-            Log.e(TAG, "Error de encriptación", e);
-            return;
-        }
+        String encryptedMessage = messageText;
+        // ENCRIPTAR AQUI
 
         if (encryptedMessage == null) {
             Log.e(TAG, "La encriptación falló");
@@ -629,16 +621,8 @@ public class Conversation extends BaseLocaleActivity {
                 continue;
             }
 
-            String decryptedMessage;
-            try {
-                decryptedMessage = AESEncryptionManager.decryptText(
-                        mr.getEncrypted_message(),
-                        AESEncryptionManager.getAESKey(this, sender)
-                );
-            } catch (Exception e) {
-                Log.e(TAG, "Error de desencriptación", e);
-                continue;
-            }
+            String decryptedMessage = mr.getEncrypted_message();
+            // DESENCRIPTAR AQUI
 
             if (decryptedMessage == null) continue;
 

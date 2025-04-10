@@ -1,5 +1,6 @@
 package com.av19.ui;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
@@ -12,6 +13,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -19,9 +21,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.Manifest;
-import androidx.core.content.ContextCompat;
-import android.os.Build;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
@@ -31,6 +30,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -44,11 +44,9 @@ import com.av19.models.Message;
 import com.av19.models.api.ApiResponse;
 import com.av19.models.api.RecieveMessageResponse;
 import com.av19.models.api.UpdateProfilePicture;
-import com.av19.utils.AESEncryptionManager;
 import com.av19.utils.ApiService;
 import com.av19.utils.BackgroundWebSocketService;
 import com.av19.utils.DatabaseHelper;
-import com.av19.utils.RSAEncryptionManager;
 import com.av19.utils.RetrofitClient;
 import com.av19.utils.SnackbarUtils;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -157,7 +155,6 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
         Log.d("ListContacts", "Registrar websocket");
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, new IntentFilter("NEW_MESSAGE"));
         fetchMessages();
-        Log.d("ListContacts", "onCreate");
     }
 
     private BroadcastReceiver messageReceiver = new BroadcastReceiver() {
@@ -177,8 +174,6 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
     }
 
     private void refreshMessagesUI(Set<Integer> updatedContactIds) {
-        contactList.sortContacts();
-
         for (int contactId : updatedContactIds) {
             int position = -1;
             for (int i = 0; i < contactList.getContacts().size(); i++) {
@@ -189,8 +184,12 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             }
             if (position != -1) {
                 contactsAdapter.notifyItemChanged(position);
+                if (position != 0) {
+                    contactsAdapter.notifyItemMoved(position, 0);
+                }
             }
         }
+        contactList.sortContacts();
     }
 
     private void setupNavigationDrawer() {
@@ -216,7 +215,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
         View headerView = navigationView.getHeaderView(0);
         ImageView user_profile_image = headerView.findViewById(R.id.user_profile_image);
 
-        SharedPreferences prefs = getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences("session", Context.MODE_PRIVATE);
         String encodedImage = prefs.getString("profile_picture", null);
         if (encodedImage != null) {
             Bitmap savedBitmap = decodeBitmapFromBase64(encodedImage);
@@ -327,11 +326,11 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs.edit();
             editor.remove("auth_token");
+            editor.remove("profile_picture");
             editor.apply();
 
             stopService(new Intent(this, BackgroundWebSocketService.class));
             DatabaseHelper.removeInstance(currentUser);
-            RSAEncryptionManager.removeInstance(currentUser);
             ContactList.removeInstance(currentUser);
 
             Intent intent = new Intent(this, SplashActivity.class);
@@ -557,20 +556,12 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
                 continue;
             }
 
-            String decryptedMessage;
-            try {
-                decryptedMessage = AESEncryptionManager.decryptText(
-                        mr.getEncrypted_message(),
-                        AESEncryptionManager.getAESKey(this, sender)
-                );
-            } catch (Exception e) {
-                Log.e(TAG, "Error de desencriptación", e);
-                continue;
-            }
+            String message = mr.getEncrypted_message();
+            // aquí habría que desencriptar
 
             boolean messageIsSender;
-            messageIsSender = sender.equals(currentUser);
-            int contactId = storeMessageInDatabase(sender, messageIsSender, decryptedMessage, sentAtStr);
+            messageIsSender = sender.equals(recipient);
+            int contactId = storeMessageInDatabase(sender, messageIsSender, message, sentAtStr);
             if (contactId != -1) {
                 updatedContactIds.add(contactId);
             }

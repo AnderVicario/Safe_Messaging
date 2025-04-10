@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -22,6 +23,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.av19.R;
 import com.av19.models.api.ApiResponse;
+import com.av19.models.api.ProfilePictureResponse;
 import com.av19.models.api.UserLogin;
 import com.av19.utils.ApiService;
 import com.av19.utils.BackgroundWebSocketService;
@@ -127,13 +129,13 @@ public class LoginMenu extends BaseLocaleActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
                     prefs.edit().putString("auth_token", username).apply();
+                    recoverPicture(username);
 
                     DatabaseHelper.getInstance(LoginMenu.this, username).setPassword(password);
 
                     SnackbarUtils.showSuccess(
                             findViewById(android.R.id.content), LoginMenu.this, getString(R.string.snackbar_success_login)
                     );
-                    navigateToContactsList();
                 } else {
                     SnackbarUtils.showError(
                             findViewById(android.R.id.content), LoginMenu.this, getString(R.string.snackbar_error_login)
@@ -159,5 +161,30 @@ public class LoginMenu extends BaseLocaleActivity {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+    }
+
+    private void recoverPicture(String token) {
+        ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
+        Call<ProfilePictureResponse> call = apiService.getProfilePicture(token);
+        call.enqueue(new Callback<ProfilePictureResponse>() {
+            @Override
+            public void onResponse(Call<ProfilePictureResponse> call, Response<ProfilePictureResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String profilePictureBase64 = response.body().getProfile_picture();
+                    if (profilePictureBase64 != null) {
+                        SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
+                        prefs.edit().putString("profile_picture", profilePictureBase64).apply();
+                    }
+                } else {
+                    Log.e("SplashActivity", "No hay una foto para el usuario: " + token);
+                }
+                navigateToContactsList();
+            }
+
+            @Override
+            public void onFailure(Call<ProfilePictureResponse> call, Throwable t) {
+                Log.e("SplashActivity", "Error fetching updated photo for contact: " + token, t);
+            }
+        });
     }
 }
