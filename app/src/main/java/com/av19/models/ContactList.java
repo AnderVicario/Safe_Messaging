@@ -196,13 +196,13 @@ public class ContactList {
         db.close();
     }
 
-    // Recargar la lista de contactos
+    // Recargar la lista completa de contactos
     public void reloadContacts(Context context) {
         loadContacts(context);
     }
 
     // Ordenar los contactos según la fecha del último mensaje
-    private void sortContacts() {
+    public void sortContacts() {
         contacts.sort((c1, c2) -> {
             Date date1 = c1.getLastMessageDate();
             Date date2 = c2.getLastMessageDate();

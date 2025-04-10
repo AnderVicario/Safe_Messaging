@@ -19,6 +19,9 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.Manifest;
+import androidx.core.content.ContextCompat;
+import android.os.Build;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
@@ -37,6 +40,7 @@ import com.av19.R;
 import com.av19.adapters.ContactsAdapter;
 import com.av19.models.Contact;
 import com.av19.models.ContactList;
+import com.av19.models.Message;
 import com.av19.models.api.ApiResponse;
 import com.av19.models.api.RecieveMessageResponse;
 import com.av19.models.api.UpdateProfilePicture;
@@ -56,10 +60,16 @@ import net.sqlcipher.database.SQLiteDatabase;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.TimeZone;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -79,6 +89,8 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
     private static final String KEY_THEME = "theme";
     private static final String KEY_LANG = "lang";
     private static final String TAG = "ListContacts";
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {});
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,8 +151,10 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
                 }
             }
         });
+        checkNotificationPermission();
 
         // Conectar el WebSocket desde el manager
+        Log.d("ListContacts", "Registrar websocket");
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, new IntentFilter("NEW_MESSAGE"));
         fetchMessages();
         Log.d("ListContacts", "onCreate");
@@ -156,22 +170,27 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
     };
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, new IntentFilter("NEW_MESSAGE"));
-        /*fetchMessages();*/
-    }
-
-    @Override
-    protected void onPause() {
-        Log.d("ListContacts", "onPause");
+    protected void onDestroy() {
+        Log.d("ListContacts", "Desregistrar websocket");
         LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver);
-        super.onPause();
+        super.onDestroy();
     }
 
-    private void refreshMessagesUI() {
-        contactList.reloadContacts(this);
-        contactsAdapter.notifyDataSetChanged();
+    private void refreshMessagesUI(Set<Integer> updatedContactIds) {
+        contactList.sortContacts();
+
+        for (int contactId : updatedContactIds) {
+            int position = -1;
+            for (int i = 0; i < contactList.getContacts().size(); i++) {
+                if (contactList.getContacts().get(i).getId() == contactId) {
+                    position = i;
+                    break;
+                }
+            }
+            if (position != -1) {
+                contactsAdapter.notifyItemChanged(position);
+            }
+        }
     }
 
     private void setupNavigationDrawer() {
@@ -526,6 +545,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
 
     private void processMessages(List<RecieveMessageResponse> messagesResponse) {
         List<String> localTimestamps = getLocalMessageTimestamps();
+        Set<Integer> updatedContactIds = new HashSet<>();
 
         for (RecieveMessageResponse mr : messagesResponse) {
             String sentAtStr = mr.getTimestamp();
@@ -550,9 +570,12 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
 
             boolean messageIsSender;
             messageIsSender = sender.equals(currentUser);
-            storeMessageInDatabase(sender, messageIsSender, decryptedMessage, sentAtStr);
+            int contactId = storeMessageInDatabase(sender, messageIsSender, decryptedMessage, sentAtStr);
+            if (contactId != -1) {
+                updatedContactIds.add(contactId);
+            }
         }
-        refreshMessagesUI();
+        refreshMessagesUI(updatedContactIds);
     }
 
     private List<String> getLocalMessageTimestamps() {
@@ -579,9 +602,10 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
         return timestamps;
     }
 
-    private void storeMessageInDatabase(String contact, boolean isSender, String message, String timestamp) {
+    private int storeMessageInDatabase(String contact, boolean isSender, String message, String timestamp) {
         DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
         SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
+        int contactId = -1;
 
         try {
             try (Cursor cursor = db.rawQuery(
@@ -589,26 +613,55 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
                     new String[]{contact}
             )) {
                 if (cursor.moveToFirst()) {
-                    int contactId = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
-                    ContentValues values = new ContentValues();
-                    values.put("contact_id", contactId);
-                    values.put("is_sender", isSender ? 1 : 0);
-                    values.put("message", message);
-                    values.put("sent_at", timestamp);
-
-                    long newRowId = db.insert("messages", null, values);
-
-                    if (newRowId == -1) {
-                        Log.e(TAG, "Error al guardar mensaje en la base de datos");
-                    } else {
-                        Log.d(TAG, "Mensaje guardado con ID: " + newRowId);
-                    }
+                    contactId = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
                 }
             }
+
+            if (contactId == -1) {
+                Log.e(TAG, "Contacto no encontrado: " + contact);
+                return -1;
+            }
+
+            ContentValues values = new ContentValues();
+            values.put("contact_id", contactId);
+            values.put("is_sender", isSender ? 1 : 0);
+            values.put("message", message);
+            values.put("sent_at", timestamp);
+
+            long newRowId = db.insert("messages", null, values);
+
+            if (newRowId == -1) {
+                Log.e(TAG, "Error al guardar mensaje en la base de datos");
+                return -1;
+            }
+
+            Date sentAtDate = convertStringToDate(timestamp);
+            Message newMessage = new Message((int) newRowId, contactId, message, isSender, sentAtDate);
+
+            for (Contact c : contactList.getContacts()) {
+                if (c.getId() == contactId) {
+                    c.getMessages().add(newMessage);
+                    break;
+                }
+            }
+            Log.d(TAG, "Mensaje guardado para contacto ID: " + contactId);
+            return contactId;
         } catch (Exception e) {
             Log.e(TAG, "Excepción al almacenar mensaje", e);
+            return -1;
         } finally {
             db.close();
+        }
+    }
+
+    private Date convertStringToDate(String dateString) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault());
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        try {
+            return sdf.parse(dateString);
+        } catch (ParseException e) {
+            Log.e("ContactList", "Error parsing date: " + dateString, e);
+            return null;
         }
     }
 
@@ -628,6 +681,16 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    private void checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
         }
     }
 }
