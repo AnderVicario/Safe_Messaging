@@ -1,13 +1,7 @@
 package com.av19.utils;
 
-import android.content.Context;
-import android.content.Intent;
-
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -17,81 +11,35 @@ import okhttp3.WebSocketListener;
 public class WebSocketClient extends WebSocketListener {
     private static WebSocketClient instance;
     private WebSocket webSocket;
-    private OkHttpClient client;
+    private final OkHttpClient client;
     private OnMessageReceivedListener listener;
-    private Context appContext;
 
-    private WebSocketClient(Context context) {
+    private WebSocketClient() {
         client = UnsafeOkHttpsClient.getUnsafeOkHttpClient();
-        appContext = context.getApplicationContext();
     }
 
-    public static synchronized WebSocketClient getInstance(Context context) {
+    public static synchronized WebSocketClient getInstance() {
         if (instance == null) {
-            instance = new WebSocketClient(context);
+            instance = new WebSocketClient();
         }
         return instance;
     }
 
-    public void disconnectWebSocket() {
-        if (webSocket != null) {
-            webSocket.close(1000, "Cierre normal");
-            webSocket = null;
-        }
-    }
-
-    // Definir la interfaz para el callback
+    // Para notificar cuando se reciba un nuevo mensaje
     public interface OnMessageReceivedListener {
         void onNewMessageReceived(String sender);
-        void onProfileUpdated(String username);
     }
 
-    // Asignar el listener desde la Activity
     public void setOnMessageReceivedListener(OnMessageReceivedListener listener) {
         this.listener = listener;
     }
 
-    @Override
-    public void onOpen(WebSocket webSocket, Response response) {
-        System.out.println("WebSocket conectado");
-    }
-
-    @Override
-    public void onMessage(WebSocket webSocket, String jsonMessage) {
-        try {
-            JSONObject message = new JSONObject(jsonMessage);
-            String type = message.getString("type");
-
-            if (type.equals("new_message")) {
-                String sender = message.getString("sender");
-
-                if (listener != null) {
-                    listener.onNewMessageReceived(sender);
-                }
-
-                // Broadcast para mensajes
-                Intent messageIntent = new Intent("NEW_MESSAGE");
-                messageIntent.putExtra("sender", sender);
-                LocalBroadcastManager.getInstance(appContext).sendBroadcast(messageIntent);
-
-            }
-            // Otras actualizaciónes para el futuro
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-        System.out.println("Error en WebSocket: " + t.getMessage());
-    }
-
+    // Conexión al servidor
     public void connectWebSocket(String username) {
-        if (webSocket != null && isConnected()) {
+        if (isConnected()) {
             System.out.println("WebSocket ya está conectado.");
             return;
         }
-
         Request request = new Request.Builder()
                 .url("wss://umbra.ddns.net:8000/ws/" + username)
                 .build();
@@ -100,5 +48,41 @@ public class WebSocketClient extends WebSocketListener {
 
     public boolean isConnected() {
         return webSocket != null;
+    }
+
+    // Cerrar la conexión
+    public void disconnectWebSocket() {
+        if (isConnected()) {
+            webSocket.close(1000, "Cierre normal");
+            webSocket = null;
+        }
+    }
+
+    // Se llama cuando la conexión se establece
+    @Override
+    public void onOpen(WebSocket webSocket, Response response) {
+        System.out.println("WebSocket conectado");
+    }
+
+    // Se llama al recibir un mensaje
+    @Override
+    public void onMessage(WebSocket webSocket, String jsonMessage) {
+        try {
+            JSONObject message = new JSONObject(jsonMessage);
+            if ("new_message".equals(message.getString("type"))) {
+                String sender = message.getString("sender");
+                if (listener != null) {
+                    listener.onNewMessageReceived(sender);
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Para manejar errores
+    @Override
+    public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+        System.out.println("Error en WebSocket: " + t.getMessage());
     }
 }

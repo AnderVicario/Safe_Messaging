@@ -87,8 +87,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
     private static final String KEY_THEME = "theme";
     private static final String KEY_LANG = "lang";
     private static final String TAG = "ListContacts";
-    private final ActivityResultLauncher<String> requestPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {});
+    private final ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {});
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,7 +118,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
 
         setupNavigationDrawer();
 
-        // Manejar pulsación del botón "atrás" para cerrar el drawer si está abierto
+        // Gestionar la pulsación del botón "atrás" para cerrar el drawer si está abierto
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -153,16 +152,18 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
 
         // Conectar el WebSocket desde el manager
         Log.d("ListContacts", "Registrar websocket");
-        LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, new IntentFilter("NEW_MESSAGE"));
-        fetchMessages();
+        LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, new IntentFilter("NEW_MESSAGES_ADDED"));
     }
 
     private BroadcastReceiver messageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            // Actualiza la UI o refresca la lista de mensajes
-            Log.d("ListContacts", "Mensaje recibido");
-            fetchMessages();
+            if ("NEW_MESSAGES_ADDED".equals(intent.getAction())) {
+                ArrayList<Integer> updatedContacts = intent.getIntegerArrayListExtra("updated_contacts");
+                if (updatedContacts != null) {
+                    refreshMessagesUI(new HashSet<>(updatedContacts));
+                }
+            }
         }
     };
 
@@ -174,7 +175,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
     }
 
     private void refreshMessagesUI(Set<Integer> updatedContactIds) {
-        for (int contactId : updatedContactIds) {
+        /*for (int contactId : updatedContactIds) {
             int position = -1;
             for (int i = 0; i < contactList.getContacts().size(); i++) {
                 if (contactList.getContacts().get(i).getId() == contactId) {
@@ -188,8 +189,10 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
                     contactsAdapter.notifyItemMoved(position, 0);
                 }
             }
-        }
+        }*/
+        contactList.reloadContacts(this);
         contactList.sortContacts();
+        contactsAdapter.notifyDataSetChanged();
     }
 
     private void setupNavigationDrawer() {
@@ -521,139 +524,6 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             }
         }
         contactsAdapter.notifyDataSetChanged();
-    }
-
-    private void fetchMessages() {
-        ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
-        apiService.getMessages(currentUser).enqueue(new retrofit2.Callback<List<RecieveMessageResponse>>() {
-            @Override
-            public void onResponse(retrofit2.Call<List<RecieveMessageResponse>> call, retrofit2.Response<List<RecieveMessageResponse>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    processMessages(response.body());
-                } else {
-                    Log.e(TAG, "Error al obtener mensajes: " + response.errorBody());
-                }
-            }
-
-            @Override
-            public void onFailure(retrofit2.Call<List<RecieveMessageResponse>> call, Throwable t) {
-                Log.e(TAG, "Fallo al obtener mensajes", t);
-            }
-        });
-    }
-
-    private void processMessages(List<RecieveMessageResponse> messagesResponse) {
-        List<String> localTimestamps = getLocalMessageTimestamps();
-        Set<Integer> updatedContactIds = new HashSet<>();
-
-        for (RecieveMessageResponse mr : messagesResponse) {
-            String sentAtStr = mr.getTimestamp();
-            String sender = mr.getSender();
-            String recipient = this.currentUser;
-
-            // Omitir mensajes que ya tenemos o mensajes iniciales
-            if (localTimestamps.contains(sentAtStr) || mr.getIs_initial()) {
-                continue;
-            }
-
-            String message = mr.getEncrypted_message();
-            // aquí habría que desencriptar
-
-            boolean messageIsSender;
-            messageIsSender = sender.equals(recipient);
-            int contactId = storeMessageInDatabase(sender, messageIsSender, message, sentAtStr);
-            if (contactId != -1) {
-                updatedContactIds.add(contactId);
-            }
-        }
-        refreshMessagesUI(updatedContactIds);
-    }
-
-    private List<String> getLocalMessageTimestamps() {
-        List<String> timestamps = new ArrayList<>();
-        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
-        SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
-
-        try {
-            Cursor cursor = db.rawQuery(
-                    "SELECT sent_at FROM messages",
-                    null
-            );
-
-            while (cursor.moveToNext()) {
-                timestamps.add(cursor.getString(cursor.getColumnIndexOrThrow("sent_at")));
-            }
-            cursor.close();
-        } catch (Exception e) {
-            Log.e(TAG, "Error al obtener timestamps de mensajes", e);
-        } finally {
-            db.close();
-        }
-
-        return timestamps;
-    }
-
-    private int storeMessageInDatabase(String contact, boolean isSender, String message, String timestamp) {
-        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
-        SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
-        int contactId = -1;
-
-        try {
-            try (Cursor cursor = db.rawQuery(
-                    "SELECT id FROM contacts WHERE name = ?",
-                    new String[]{contact}
-            )) {
-                if (cursor.moveToFirst()) {
-                    contactId = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
-                }
-            }
-
-            if (contactId == -1) {
-                Log.e(TAG, "Contacto no encontrado: " + contact);
-                return -1;
-            }
-
-            ContentValues values = new ContentValues();
-            values.put("contact_id", contactId);
-            values.put("is_sender", isSender ? 1 : 0);
-            values.put("message", message);
-            values.put("sent_at", timestamp);
-
-            long newRowId = db.insert("messages", null, values);
-
-            if (newRowId == -1) {
-                Log.e(TAG, "Error al guardar mensaje en la base de datos");
-                return -1;
-            }
-
-            Date sentAtDate = convertStringToDate(timestamp);
-            Message newMessage = new Message((int) newRowId, contactId, message, isSender, sentAtDate);
-
-            for (Contact c : contactList.getContacts()) {
-                if (c.getId() == contactId) {
-                    c.getMessages().add(newMessage);
-                    break;
-                }
-            }
-            Log.d(TAG, "Mensaje guardado para contacto ID: " + contactId);
-            return contactId;
-        } catch (Exception e) {
-            Log.e(TAG, "Excepción al almacenar mensaje", e);
-            return -1;
-        } finally {
-            db.close();
-        }
-    }
-
-    private Date convertStringToDate(String dateString) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault());
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        try {
-            return sdf.parse(dateString);
-        } catch (ParseException e) {
-            Log.e("ContactList", "Error parsing date: " + dateString, e);
-            return null;
-        }
     }
 
     // Convertir un Bitmap a una cadena Base64

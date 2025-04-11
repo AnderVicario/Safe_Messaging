@@ -95,7 +95,6 @@ public class Conversation extends BaseLocaleActivity {
         refreshMessagesUI();
 
         LocalBroadcastManager.getInstance(this).registerReceiver(newMessageReceiver, new IntentFilter("NEW_MESSAGE"));
-        fetchMessages();
         Log.d("Conversation", "onCreate");
     }
 
@@ -104,7 +103,6 @@ public class Conversation extends BaseLocaleActivity {
         Log.d("Conversation", "onResume");
         super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(newMessageReceiver, new IntentFilter("NEW_MESSAGE"));
-        /*fetchMessages();*/
     }
 
     @Override
@@ -117,19 +115,16 @@ public class Conversation extends BaseLocaleActivity {
     private BroadcastReceiver newMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d("Conversation", "Mensaje recibido");
-            String sender = intent.getStringExtra("sender");
-            // Solo actualizamos si el sender coincide con el contacto actual
-            Log.d("Conversation", "Sender: " + sender  + ", Contact: " + contactName);
-            if (sender != null && sender.equals(contactName)) {
-                Log.d("Conversation", "Mensaje recibido de " + contactName);
-                fetchMessages();
-                /*refreshMessagesUI();*/
+            if ("NEW_MESSAGES_ADDED".equals(intent.getAction())) {
+                ArrayList<Integer> updatedContacts = intent.getIntegerArrayListExtra("updated_contacts");
+                if (updatedContacts != null && updatedContacts.contains(Integer.parseInt(contactId))) {
+                    refreshMessagesUI();
+                }
             }
         }
     };
 
-    // Inicializa la interfaz de usuario y las propiedades de la ventana.
+    // Inicializar la interfaz de usuario y las propiedades de la ventana.
     private void initUI() {
         EdgeToEdge.enable(this);
         setContentView(R.layout.conversation);
@@ -145,7 +140,7 @@ public class Conversation extends BaseLocaleActivity {
         btnLocation = findViewById(R.id.frl_location);
     }
 
-    // Recupera los extras del intent.
+    // Recuperar los extras del intent.
     private void initIntentData() {
         Intent intent = getIntent();
         contactId = intent.getStringExtra("contact_id");
@@ -165,7 +160,7 @@ public class Conversation extends BaseLocaleActivity {
                 .getString("auth_token", null);
     }
 
-    // Configura la barra de herramientas.
+    // Configurar la barra de herramientas.
     private void initToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -175,7 +170,7 @@ public class Conversation extends BaseLocaleActivity {
         }
     }
 
-    // Configura el listener del botón de enviar.
+    // Configurar el listener del botón de enviar.
     private void initListeners() {
         btnSend.setOnClickListener(v -> {
             String messageText = messageEditText.getText().toString().trim();
@@ -533,6 +528,9 @@ public class Conversation extends BaseLocaleActivity {
         storeMessageInDatabase(Integer.parseInt(contactId), true, messageText);
         refreshMessagesUI();
 
+        // Actualizar ListContacts
+        notifyContactListUpdate();
+
         // Luego enviar a la API
         MessageCreate messageCreate = new MessageCreate(currentUser, contactName, encryptedMessage);
         ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
@@ -541,7 +539,6 @@ public class Conversation extends BaseLocaleActivity {
             public void onResponse(retrofit2.Call<SendMessageResponse> call, retrofit2.Response<SendMessageResponse> response) {
                 if (!response.isSuccessful()) {
                     Log.e(TAG, "Error en la API: " + response.errorBody());
-                    /*fetchMessages();*/
                 }
             }
 
@@ -552,109 +549,15 @@ public class Conversation extends BaseLocaleActivity {
         });
     }
 
-    private void sendMessageSendNotification() {
-        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        String channelId = "msg_channel";
+    private void notifyContactListUpdate() {
+        // Crear lista con el ID del contacto actual
+        ArrayList<Integer> updatedContacts = new ArrayList<>();
+        updatedContacts.add(Integer.parseInt(contactId));
 
-        // Crear el NotificationCompat.Builder con el canal indicado
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelId)
-                .setSmallIcon(R.drawable.cdnlogo_com_whatsapp2)
-                .setContentTitle(getString(R.string.new_message))
-                .setContentText(getString(R.string.new_message_description))
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setAutoCancel(true);
-
-        // Para Android Oreo (API 26) y superior, es necesario crear un canal de notificaciones
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence channelName = "MSG_CHANNEL";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel notificationChannel = new NotificationChannel(channelId, channelName, importance);
-            notificationManager.createNotificationChannel(notificationChannel);
-        }
-
-        // Enviar la notificación (el número 1 es el ID de la notificación, se puede usar para actualizar o cancelar)
-        notificationManager.notify(1, builder.build());
-    }
-
-    // -----------------------------
-    // --- Recepción de Mensajes ---
-    // -----------------------------
-
-    /**
-     * Obtiene mensajes desde la API.
-     */
-    private void fetchMessages() {
-        ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
-        apiService.getMessages(currentUser).enqueue(new retrofit2.Callback<List<RecieveMessageResponse>>() {
-            @Override
-            public void onResponse(retrofit2.Call<List<RecieveMessageResponse>> call, retrofit2.Response<List<RecieveMessageResponse>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    processMessages(response.body());
-                } else {
-                    Log.e(TAG, "Error al obtener mensajes: " + response.errorBody());
-                }
-            }
-
-            @Override
-            public void onFailure(retrofit2.Call<List<RecieveMessageResponse>> call, Throwable t) {
-                Log.e(TAG, "Fallo al obtener mensajes", t);
-            }
-        });
-    }
-
-    /**
-     * Procesa y almacena nuevos mensajes recibidos de la API web.
-     * Guarda todos los mensajes en la base de datos, pero solo actualiza
-     * la UI si hay mensajes nuevos para la conversación actual.
-     */
-    private void processMessages(List<RecieveMessageResponse> messagesResponse) {
-        List<String> localTimestamps = getLocalMessageTimestamps();
-        boolean hasNewMessagesForCurrentContact = false;
-
-        for (RecieveMessageResponse mr : messagesResponse) {
-            String sentAtStr = mr.getTimestamp();
-            String sender = mr.getSender();
-            String recipient = this.currentUser;
-
-            // Omitir mensajes que ya tenemos o mensajes iniciales
-            if (localTimestamps.contains(sentAtStr) || mr.getIs_initial()) {
-                continue;
-            }
-
-            String decryptedMessage = mr.getEncrypted_message();
-            // DESENCRIPTAR AQUI
-
-            if (decryptedMessage == null) continue;
-
-            // Determinar el ID del contacto para este mensaje
-            int messageContactId;
-            boolean messageIsSender;
-
-            if (sender.equals(currentUser)) {
-                // Mensaje enviado por el usuario actual
-                messageContactId = getContactIdByName(recipient);
-                messageIsSender = true;
-            } else {
-                // Mensaje recibido por el usuario actual
-                messageContactId = getContactIdByName(sender);
-                messageIsSender = false;
-            }
-
-            // Solo si se pudo identificar el contacto
-            if (messageContactId != -1) {
-                storeMessageInDatabase(messageContactId, messageIsSender, decryptedMessage, sentAtStr);
-
-                // Verificar si este mensaje pertenece a la conversación actual
-                if (messageContactId == Integer.parseInt(contactId)) {
-                    hasNewMessagesForCurrentContact = true;
-                }
-            }
-        }
-
-        // Solo actualizar la UI si hay mensajes nuevos para el contacto actual
-        if (hasNewMessagesForCurrentContact) {
-            runOnUiThread(this::refreshMessagesUI);
-        }
+        // Enviar el broadcast con la estructura esperada
+        Intent updateIntent = new Intent("NEW_MESSAGES_ADDED");
+        updateIntent.putIntegerArrayListExtra("updated_contacts", updatedContacts);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(updateIntent);
     }
 
     // -------------------------------------------------
