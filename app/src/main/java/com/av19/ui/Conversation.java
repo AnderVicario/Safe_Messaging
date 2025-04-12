@@ -41,6 +41,7 @@ import com.av19.models.api.SendMessageResponse;
 import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
 import com.av19.utils.RetrofitClient;
+import com.av19.utils.WebSocketClient;
 
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
@@ -69,7 +70,7 @@ public class Conversation extends BaseLocaleActivity {
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS";
 
     // Componentes de interfaz de usuario
-    private TextView profileName;
+    private TextView profileName, profileStatus;
     private ImageView profilePicture;
     private RecyclerView messagesRecyclerView;
     private EditText messageEditText;
@@ -133,6 +134,7 @@ public class Conversation extends BaseLocaleActivity {
         window.setStatusBarColor(ContextCompat.getColor(this, R.color.surface));
 
         profileName = findViewById(R.id.tv_contact_name);
+        profileStatus = findViewById(R.id.tv_contact_status);
         profilePicture = findViewById(R.id.iv_contact_img);
         messagesRecyclerView = findViewById(R.id.rview_messages);
         messageEditText = findViewById(R.id.et_message);
@@ -148,6 +150,7 @@ public class Conversation extends BaseLocaleActivity {
         byte[] photo = getIntent().getByteArrayExtra("contact_photo");
 
         profileName.setText(contactName);
+        profileStatus.setText(WebSocketClient.getInstance().isConnected() ? getString(R.string.drawer_status_online) : getString(R.string.drawer_status_offline));
 
         if (photo != null) {
             Bitmap bitmap = android.graphics.BitmapFactory.decodeByteArray(photo, 0, photo.length);
@@ -289,7 +292,6 @@ public class Conversation extends BaseLocaleActivity {
             SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
 
             try {
-                // Comenzar transacción para operaciones masivas
                 db.beginTransaction();
 
                 for (int i = 0; i < jsonArray.length(); i++) {
@@ -300,7 +302,7 @@ public class Conversation extends BaseLocaleActivity {
                     String message = jsonMessage.getString("message");
                     String timestamp = jsonMessage.getString("timestamp");
 
-                    // Verificar si el mensaje ya existe para evitar duplicados
+                    // Verificar si el mensaje ya existe
                     Cursor checkCursor = db.rawQuery(
                             "SELECT id FROM messages WHERE id = ?",
                             new String[]{String.valueOf(id)}

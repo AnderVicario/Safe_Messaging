@@ -56,4 +56,8 @@
     <string name="snackbar_success_update_profile_picture">Irudia eguneratu egin da.</string>
     <string name="snackbar_error_update_profile_picture">Ezin izan da irudia eguneratu.</string>
     <string name="snackbar_error_username_same">Ezin duzu zure burua gehitu!</string>
+    <string name="take_photo">Atera argazkia</string>
+    <string name="choose_from_gallery">Ireki galeria</string>
+    <string name="select_photo">Aukeratu argazkia</string>
+    <string name="drawer_status_offline">Deskonektatuta</string>
 </resources>

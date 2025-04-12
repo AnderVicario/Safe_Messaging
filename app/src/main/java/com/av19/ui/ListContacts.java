@@ -49,6 +49,7 @@ import com.av19.utils.BackgroundWebSocketService;
 import com.av19.utils.DatabaseHelper;
 import com.av19.utils.RetrofitClient;
 import com.av19.utils.SnackbarUtils;
+import com.av19.utils.WebSocketClient;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
@@ -83,11 +84,22 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
     private NavigationView navigationView;
     private String currentUser;
     private ActivityResultLauncher<Intent> pickImageLauncher;
+    private ActivityResultLauncher<Intent> cameraLauncher;
+    private Uri cameraImageUri;
     private static final String PREFS_NAME = "settings";
     private static final String KEY_THEME = "theme";
     private static final String KEY_LANG = "lang";
     private static final String TAG = "ListContacts";
-    private final ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {});
+    private final ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(),
+            isGranted -> {
+                if (isGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    // Permiso para la cámara
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        openCamera();
+                    }
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -215,75 +227,28 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             user_profile_image.setImageResource(R.drawable.ic_launcher_background);
         }
 
+        // Inicializar los launchers para cámara y galería
+        initializeImageLaunchers(user_profile_image);
+
+        user_profile_image.setOnClickListener(v -> {
+            showImageSourceDialog();
+        });
+
+        TextView user_name = headerView.findViewById(R.id.user_name);
+        user_name.setText(currentUser);
+
+        TextView user_status = headerView.findViewById(R.id.user_status);
+        user_status.setText(WebSocketClient.getInstance().isConnected() ? getString(R.string.drawer_status_online) : getString(R.string.drawer_status_offline));
+    }
+
+    private void initializeImageLaunchers(ImageView user_profile_image) {
+        // Inicializar launcher para seleccionar imagen de la galería
         pickImageLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if(result.getResultCode() == Activity.RESULT_OK && result.getData() != null){
                 Uri imageUri = result.getData().getData();
                 try {
                     Bitmap originalBitmap = android.provider.MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-                    int width = originalBitmap.getWidth();
-                    int height = originalBitmap.getHeight();
-                    int squareSize = Math.min(width, height);
-                    int x = (width - squareSize) / 2;
-                    int y = (height - squareSize) / 2;
-                    Bitmap croppedBitmap = Bitmap.createBitmap(
-                            originalBitmap,
-                            x,
-                            y,
-                            squareSize,
-                            squareSize
-                    );
-                    int targetSize = 500;
-                    Bitmap scaledBitmap = Bitmap.createScaledBitmap(
-                            croppedBitmap,
-                            targetSize,
-                            targetSize,
-                            true
-                    );
-                    user_profile_image.setImageBitmap(scaledBitmap);
-
-                    // Guardar la imagen en SharedPreferences
-                    String newEncodedImage = encodeBitmapToBase64(scaledBitmap);
-                    prefs.edit().putString("profile_picture", newEncodedImage).apply();
-
-                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream);
-                    byte[] userPhoto = stream.toByteArray();
-                    String photoBase64 = Base64.getEncoder().encodeToString(userPhoto);
-
-                    // Liberar recursos de Bitmaps
-                    if (originalBitmap != croppedBitmap) {
-                        originalBitmap.recycle();
-                    }
-                    if (croppedBitmap != scaledBitmap) {
-                        croppedBitmap.recycle();
-                    }
-
-                    // Crear la solicitud para actualizar la foto de perfil
-                    UpdateProfilePicture updatePicRequest = new UpdateProfilePicture(currentUser, DatabaseHelper.getInstance(this, currentUser).getDecryptedPassword(), photoBase64);
-                    ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
-                    Call<ApiResponse> call = apiService.updateProfilePicture(updatePicRequest);
-                    call.enqueue(new Callback<ApiResponse>() {
-                        @Override
-                        public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
-                            if(response.isSuccessful()){
-                                SnackbarUtils.showSuccess(
-                                        findViewById(android.R.id.content), ListContacts.this, getString(R.string.snackbar_success_update_profile_picture)
-                                );
-                            } else {
-                                SnackbarUtils.showError(
-                                        findViewById(android.R.id.content), ListContacts.this, getString(R.string.snackbar_error_update_profile_picture)
-                                );
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(Call<ApiResponse> call, Throwable t) {
-                            SnackbarUtils.showError(
-                                    findViewById(android.R.id.content), ListContacts.this, getString(R.string.snackbar_error_update_profile_picture)
-                            );
-                        }
-                    });
-
+                    processAndUploadImage(originalBitmap, user_profile_image);
                 } catch (IOException e) {
                     e.printStackTrace();
                     Toast.makeText(ListContacts.this, "Failed to process image", Toast.LENGTH_SHORT).show();
@@ -291,14 +256,122 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             }
         });
 
-        user_profile_image.setOnLongClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            pickImageLauncher.launch(intent);
-            return true;
+        // Inicializar launcher para tomar foto con la cámara
+        cameraLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == Activity.RESULT_OK) {
+                try {
+                    Bitmap originalBitmap = android.provider.MediaStore.Images.Media.getBitmap(getContentResolver(), cameraImageUri);
+                    processAndUploadImage(originalBitmap, user_profile_image);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast.makeText(ListContacts.this, "Failed to process image", Toast.LENGTH_SHORT).show();
+                }
+            }
         });
+    }
 
-        TextView user_name = headerView.findViewById(R.id.user_name);
-        user_name.setText(currentUser);
+    private void showImageSourceDialog() {
+        String[] options = {getString(R.string.take_photo), getString(R.string.choose_from_gallery)};
+
+        new MaterialAlertDialogBuilder(this, R.style.RoundedDialog)
+                .setTitle(getString(R.string.select_photo))
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        // Cámara
+                        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                            openCamera();
+                        } else {
+                            requestPermissionLauncher.launch(Manifest.permission.CAMERA);
+                        }
+                    } else {
+                        // Galería
+                        Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                        pickImageLauncher.launch(intent);
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void openCamera() {
+        ContentValues values = new ContentValues();
+        values.put(android.provider.MediaStore.Images.Media.TITLE, "New Picture");
+        values.put(android.provider.MediaStore.Images.Media.DESCRIPTION, "From the Camera");
+        cameraImageUri = getContentResolver().insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
+        Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        cameraIntent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, cameraImageUri);
+        cameraLauncher.launch(cameraIntent);
+    }
+
+    private void processAndUploadImage(Bitmap originalBitmap, ImageView user_profile_image) {
+        int width = originalBitmap.getWidth();
+        int height = originalBitmap.getHeight();
+        int squareSize = Math.min(width, height);
+        int x = (width - squareSize) / 2;
+        int y = (height - squareSize) / 2;
+
+        Bitmap croppedBitmap = Bitmap.createBitmap(
+                originalBitmap,
+                x,
+                y,
+                squareSize,
+                squareSize
+        );
+
+        int targetSize = 500;
+        Bitmap scaledBitmap = Bitmap.createScaledBitmap(
+                croppedBitmap,
+                targetSize,
+                targetSize,
+                true
+        );
+
+        user_profile_image.setImageBitmap(scaledBitmap);
+
+        // Guardar la imagen en SharedPreferences
+        SharedPreferences prefs = getSharedPreferences("session", Context.MODE_PRIVATE);
+        String newEncodedImage = encodeBitmapToBase64(scaledBitmap);
+        prefs.edit().putString("profile_picture", newEncodedImage).apply();
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream);
+        byte[] userPhoto = stream.toByteArray();
+        String photoBase64 = Base64.getEncoder().encodeToString(userPhoto);
+
+        // Liberar recursos de Bitmaps
+        if (originalBitmap != croppedBitmap) {
+            originalBitmap.recycle();
+        }
+        if (croppedBitmap != scaledBitmap) {
+            croppedBitmap.recycle();
+        }
+
+        // Crear la solicitud para actualizar la foto de perfil
+        UpdateProfilePicture updatePicRequest = new UpdateProfilePicture(currentUser, DatabaseHelper.getInstance(this, currentUser).getDecryptedPassword(), photoBase64);
+        ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
+        Call<ApiResponse> call = apiService.updateProfilePicture(updatePicRequest);
+        call.enqueue(new Callback<ApiResponse>() {
+            @Override
+            public void onResponse(Call<ApiResponse> call, Response<ApiResponse> response) {
+                if(response.isSuccessful()){
+                    SnackbarUtils.showSuccess(
+                            findViewById(android.R.id.content), ListContacts.this, getString(R.string.snackbar_success_update_profile_picture)
+                    );
+                } else {
+                    SnackbarUtils.showError(
+                            findViewById(android.R.id.content), ListContacts.this, getString(R.string.snackbar_error_update_profile_picture)
+                    );
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse> call, Throwable t) {
+                SnackbarUtils.showError(
+                        findViewById(android.R.id.content), ListContacts.this, getString(R.string.snackbar_error_update_profile_picture)
+                );
+            }
+        });
     }
 
     @Override

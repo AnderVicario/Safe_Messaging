@@ -56,4 +56,8 @@
     <string name="snackbar_success_update_profile_picture">Se ha actualizado la foto de perfil.</string>
     <string name="snackbar_error_update_profile_picture">Ha habido un error durante la actualización de la foto de perfil.</string>
     <string name="snackbar_error_username_same">No te puedes añadir a ti mismo!</string>
+    <string name="take_photo">Sacar foto</string>
+    <string name="choose_from_gallery">Abrir galería</string>
+    <string name="select_photo">Elegir foto</string>
+    <string name="drawer_status_offline">Desconetado</string>
 </resources>
