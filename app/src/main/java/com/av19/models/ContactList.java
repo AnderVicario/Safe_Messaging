@@ -28,7 +28,7 @@ import retrofit2.Response;
 
 public class ContactList {
     private static final Map<String, ContactList> instances = new HashMap<>();
-    private static List<Contact> contacts = new ArrayList<>();
+    private List<Contact> contacts = new ArrayList<>();
     private DatabaseHelper dbHelper;
     private String currentUser;
     private OnContactPhotoUpdatedListener photoUpdateListener;
@@ -37,12 +37,12 @@ public class ContactList {
         this.currentUser = currentUser;
         this.dbHelper = DatabaseHelper.getInstance(context, currentUser);
         // Carga inicial de contactos
-        loadContacts(context);
+        loadContacts(context, true);
     }
 
     // Método encargado de cargar y actualizar la lista de contactos
-    private void loadContacts(Context context) {
-        contacts.clear();
+    private void loadContacts(Context context, Boolean reloadPictures) {
+        this.contacts.clear();
         SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
 
         Cursor contactCursor = db.rawQuery("SELECT * FROM contacts", null);
@@ -64,44 +64,46 @@ public class ContactList {
                 List<Message> messages = loadMessagesForContact(db, contactId);
 
                 // Crear el contacto y añadirlo a la lista
-                contacts.add(new Contact(contactId, contactName, contactPublicKey, contactPhoto, messages, context));
+                this.contacts.add(new Contact(contactId, contactName, contactPublicKey, contactPhoto, messages, context));
             }
         }
         sortContacts();
         contactCursor.close();
         db.close();
 
-        // Para cada contacto, actualizar la foto usando la API, excepto el propio usuario
-        ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
-        for (Contact contact : contacts) {
-            if (!contact.getName().equals(currentUser)) {
-                Call<ProfilePictureResponse> call = apiService.getProfilePicture(contact.getName());
-                call.enqueue(new Callback<ProfilePictureResponse>() {
-                    @Override
-                    public void onResponse(Call<ProfilePictureResponse> call, Response<ProfilePictureResponse> response) {
-                        if (response.isSuccessful() && response.body() != null) {
-                            String profilePictureBase64 = response.body().getProfile_picture();
-                            if (profilePictureBase64 != null) {
-                                try {
-                                    byte[] updatedPhoto = java.util.Base64.getDecoder().decode(profilePictureBase64);
-                                    contact.setPhoto(updatedPhoto);
-                                    if (photoUpdateListener != null) {
-                                        photoUpdateListener.onContactPhotoUpdated(contact);
+        if (reloadPictures) {
+            ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
+            for (Contact contact : contacts) {
+                if (!contact.getName().equals(currentUser)) {
+                    Call<ProfilePictureResponse> call = apiService.getProfilePicture(contact.getName());
+                    call.enqueue(new Callback<ProfilePictureResponse>() {
+                        @Override
+                        public void onResponse(Call<ProfilePictureResponse> call, Response<ProfilePictureResponse> response) {
+                            if (response.isSuccessful() && response.body() != null) {
+                                String profilePictureBase64 = response.body().getProfile_picture();
+                                if (profilePictureBase64 != null) {
+                                    try {
+                                        byte[] updatedPhoto = java.util.Base64.getDecoder().decode(profilePictureBase64);
+                                        contact.setPhoto(updatedPhoto);
+                                        updateContact(contact.getId(), contact.getName(), updatedPhoto);
+                                        if (photoUpdateListener != null) {
+                                            photoUpdateListener.onContactPhotoUpdated(contact.getId());
+                                        }
+                                    } catch (IllegalArgumentException e) {
+                                        Log.e("ContactList", "Error decoding profile picture for " + contact.getName(), e);
                                     }
-                                } catch (IllegalArgumentException e) {
-                                    Log.e("ContactList", "Error decoding profile picture for " + contact.getName(), e);
                                 }
+                            } else {
+                                Log.e("ContactList", "No se pudo obtener la foto de " + contact.getName());
                             }
-                        } else {
-                            Log.e("ContactList", "No se pudo obtener la foto de " + contact.getName());
                         }
-                    }
 
-                    @Override
-                    public void onFailure(Call<ProfilePictureResponse> call, Throwable t) {
-                        Log.e("ContactList", "Error fetching updated photo for contact: " + contact.getName(), t);
-                    }
-                });
+                        @Override
+                        public void onFailure(Call<ProfilePictureResponse> call, Throwable t) {
+                            Log.e("ContactList", "Error fetching updated photo for contact: " + contact.getName(), t);
+                        }
+                    });
+                }
             }
         }
     }
@@ -197,13 +199,13 @@ public class ContactList {
     }
 
     // Recargar la lista completa de contactos
-    public void reloadContacts(Context context) {
-        loadContacts(context);
+    public void reloadContacts(Context context, Boolean reloadPictures) {
+        loadContacts(context, reloadPictures);
     }
 
     // Ordenar los contactos según la fecha del último mensaje
     public void sortContacts() {
-        contacts.sort((c1, c2) -> {
+        this.contacts.sort((c1, c2) -> {
             Date date1 = c1.getLastMessageDate();
             Date date2 = c2.getLastMessageDate();
 
@@ -216,7 +218,7 @@ public class ContactList {
     }
 
     public interface OnContactPhotoUpdatedListener {
-        void onContactPhotoUpdated(Contact contact);
+        void onContactPhotoUpdated(int contactId);
     }
 
     public void setOnContactPhotoUpdatedListener(OnContactPhotoUpdatedListener listener) {

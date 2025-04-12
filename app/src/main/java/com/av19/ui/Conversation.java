@@ -94,7 +94,7 @@ public class Conversation extends BaseLocaleActivity {
         initListeners();
         refreshMessagesUI();
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(newMessageReceiver, new IntentFilter("NEW_MESSAGE"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(newMessageReceiver, new IntentFilter("NEW_MESSAGES_ADDED"));
         Log.d("Conversation", "onCreate");
     }
 
@@ -102,7 +102,7 @@ public class Conversation extends BaseLocaleActivity {
     protected void onResume() {
         Log.d("Conversation", "onResume");
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(newMessageReceiver, new IntentFilter("NEW_MESSAGE"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(newMessageReceiver, new IntentFilter("NEW_MESSAGES_ADDED"));
     }
 
     @Override
@@ -330,6 +330,7 @@ public class Conversation extends BaseLocaleActivity {
             }
 
             refreshMessagesUI();
+            notifyContactListUpdate();
         } catch (IOException | JSONException e) {
             Log.e(TAG, "Error al importar la conversación", e);
         }
@@ -351,6 +352,7 @@ public class Conversation extends BaseLocaleActivity {
         db.delete("messages", "contact_id = ?", new String[]{contactId});
         db.close();
         refreshMessagesUI();
+        notifyContactListUpdate();
     }
 
     // -------------------------

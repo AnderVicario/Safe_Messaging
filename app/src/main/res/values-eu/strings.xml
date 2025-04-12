@@ -55,4 +55,5 @@
     <string name="drawer_item_close_account">Saioa itxi</string>
     <string name="snackbar_success_update_profile_picture">Irudia eguneratu egin da.</string>
     <string name="snackbar_error_update_profile_picture">Ezin izan da irudia eguneratu.</string>
+    <string name="snackbar_error_username_same">Ezin duzu zure burua gehitu!</string>
 </resources>

@@ -133,22 +133,23 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
 
         contactList.setOnContactPhotoUpdatedListener(new ContactList.OnContactPhotoUpdatedListener() {
             @Override
-            public void onContactPhotoUpdated(Contact updatedContact) {
-                // Buscar la posición del contacto actualizado
-                int position = -1;
-                for (int i = 0; i < contactList.getContacts().size(); i++) {
-                    if (contactList.getContacts().get(i).getId() == updatedContact.getId()) {
-                        position = i;
-                        break;
+            public void onContactPhotoUpdated(int contactId) {
+                runOnUiThread(() -> {
+                    int position = -1;
+                    for (int i = 0; i < contactList.getContacts().size(); i++) {
+                        if (contactList.getContacts().get(i).getId() == contactId) {
+                            position = i;
+                            break;
+                        }
                     }
-                }
-                if (position != -1) {
-                    // Actualizar solo ese elemento en el RecyclerView
-                    contactsAdapter.notifyItemChanged(position);
-                }
+                    if (position != -1) {
+                        contactsAdapter.notifyItemChanged(position);
+                    }
+                });
             }
         });
         checkNotificationPermission();
+        refreshMessagesUI(true);
 
         // Conectar el WebSocket desde el manager
         Log.d("ListContacts", "Registrar websocket");
@@ -161,7 +162,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             if ("NEW_MESSAGES_ADDED".equals(intent.getAction())) {
                 ArrayList<Integer> updatedContacts = intent.getIntegerArrayListExtra("updated_contacts");
                 if (updatedContacts != null) {
-                    refreshMessagesUI(new HashSet<>(updatedContacts));
+                    refreshMessagesUI(false);
                 }
             }
         }
@@ -174,23 +175,8 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
         super.onDestroy();
     }
 
-    private void refreshMessagesUI(Set<Integer> updatedContactIds) {
-        /*for (int contactId : updatedContactIds) {
-            int position = -1;
-            for (int i = 0; i < contactList.getContacts().size(); i++) {
-                if (contactList.getContacts().get(i).getId() == contactId) {
-                    position = i;
-                    break;
-                }
-            }
-            if (position != -1) {
-                contactsAdapter.notifyItemChanged(position);
-                if (position != 0) {
-                    contactsAdapter.notifyItemMoved(position, 0);
-                }
-            }
-        }*/
-        contactList.reloadContacts(this);
+    private void refreshMessagesUI(Boolean reloadPictures) {
+        contactList.reloadContacts(this, reloadPictures);
         contactList.sortContacts();
         contactsAdapter.notifyDataSetChanged();
     }
