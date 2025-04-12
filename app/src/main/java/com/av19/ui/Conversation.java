@@ -70,7 +70,7 @@ public class Conversation extends BaseLocaleActivity {
     private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS";
 
     // Componentes de interfaz de usuario
-    private TextView profileName, profileStatus;
+    private TextView profileName;
     private ImageView profilePicture;
     private RecyclerView messagesRecyclerView;
     private EditText messageEditText;
@@ -134,7 +134,6 @@ public class Conversation extends BaseLocaleActivity {
         window.setStatusBarColor(ContextCompat.getColor(this, R.color.surface));
 
         profileName = findViewById(R.id.tv_contact_name);
-        profileStatus = findViewById(R.id.tv_contact_status);
         profilePicture = findViewById(R.id.iv_contact_img);
         messagesRecyclerView = findViewById(R.id.rview_messages);
         messageEditText = findViewById(R.id.et_message);
@@ -150,8 +149,6 @@ public class Conversation extends BaseLocaleActivity {
         byte[] photo = getIntent().getByteArrayExtra("contact_photo");
 
         profileName.setText(contactName);
-        profileStatus.setText(WebSocketClient.getInstance().isConnected() ? getString(R.string.drawer_status_online) : getString(R.string.drawer_status_offline));
-
         if (photo != null) {
             Bitmap bitmap = android.graphics.BitmapFactory.decodeByteArray(photo, 0, photo.length);
             profilePicture.setImageBitmap(bitmap);

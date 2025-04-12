@@ -49,22 +49,6 @@
             android:textStyle="bold"
             tools:layout_editor_absoluteX="16dp"
             tools:layout_editor_absoluteY="16dp" />
-
-        <Space
-            android:layout_width="10dp"
-            android:layout_height="wrap_content"
-            tools:layout_editor_absoluteX="64dp" />
-
-        <TextView
-            android:id="@+id/tv_contact_status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="left"
-            android:text="Status"
-            android:textColor="@color/primary"
-            android:textSize="16sp"
-            tools:layout_editor_absoluteX="155dp"
-            tools:layout_editor_absoluteY="21dp" />
     </androidx.appcompat.widget.Toolbar>
 
     <androidx.recyclerview.widget.RecyclerView
