@@ -163,10 +163,19 @@ public class BackgroundWebSocketService extends Service {
         try {
             List<String> existingTimestamps = getExistingTimestamps(db);
             for (RecieveMessageResponse msg : messages) {
-                if (shouldSkipMessage(msg, existingTimestamps)) continue;
+                if (shouldSkipMessage(db, msg, existingTimestamps)) continue;
 
-                String contactName = msg.getSender().equals(currentUser) ? currentUser : msg.getSender();
-                int contactId = getContactId(db, contactName);
+                String sender = msg.getSender().equals(currentUser) ? currentUser : msg.getSender();
+
+                int contactId;
+                if (sender.equals(currentUser)){
+                    contactId = getContactId(db,  msg.getReceiver());
+                }
+                else {
+                    contactId = getContactId(db, sender);
+                }
+
+
                 if (contactId == -1) continue;
 
                 storeMessage(db, contactId, msg);
@@ -182,8 +191,31 @@ public class BackgroundWebSocketService extends Service {
     // Procesamiento de mensajes y base de datos
     // --------------------------------------------------------
 
-    private boolean shouldSkipMessage(RecieveMessageResponse msg, List<String> existingTimestamps) {
-        return existingTimestamps.contains(msg.getTimestamp()) || msg.getIs_initial();
+    private boolean shouldSkipMessage(SQLiteDatabase db, RecieveMessageResponse msg, List<String> existingTimestamps) {
+        // Obtener el último mensaje del usuario
+        String lastContent = null;
+        String lastTimestamp = null;
+        try (Cursor cursor = db.rawQuery(
+                "SELECT message FROM messages WHERE is_sender = 1 ORDER BY sent_at DESC LIMIT 1",
+                null
+        )) {
+            if (cursor.moveToFirst()) {
+                lastContent = cursor.getString(0);
+            }
+        }
+
+        // Calcular si el nuevo mensaje es igual al último
+        boolean isDuplicateRecentMessage = false;
+        if (lastContent != null) {
+            if (lastContent.equals(msg.getEncrypted_message())) {
+                isDuplicateRecentMessage = true;
+            }
+        }
+
+        // Condición final
+        return existingTimestamps.contains(msg.getTimestamp())
+                || msg.getIs_initial()
+                || isDuplicateRecentMessage;
     }
 
     private List<String> getExistingTimestamps(SQLiteDatabase db) {
