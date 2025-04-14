@@ -1,17 +1,24 @@
 package com.av19.ui;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.DatePickerDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,6 +28,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
@@ -40,7 +48,9 @@ import com.av19.models.api.RecieveMessageResponse;
 import com.av19.models.api.SendMessageResponse;
 import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
+import com.av19.utils.MessageSchedulerReceiver;
 import com.av19.utils.RetrofitClient;
+import com.av19.utils.SnackbarUtils;
 import com.av19.utils.WebSocketClient;
 
 import net.sqlcipher.Cursor;
@@ -58,9 +68,11 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.TimeZone;
 
 public class Conversation extends BaseLocaleActivity {
@@ -178,6 +190,15 @@ public class Conversation extends BaseLocaleActivity {
                 messageEditText.setText("");
                 sendAndStoreMessage(messageText);
             }
+        });
+        btnSend.setOnLongClickListener(v -> {
+            String messageText = messageEditText.getText().toString().trim();
+            if (!messageText.isEmpty()) {
+                messageEditText.setText("");
+                showDateTimePicker(messageText);
+                return true;
+            }
+            return false;
         });
         btnLocation.setOnClickListener(v -> {
             Intent intent = new Intent(this, AddLocationMenu.class);
@@ -559,6 +580,56 @@ public class Conversation extends BaseLocaleActivity {
         Intent updateIntent = new Intent("NEW_MESSAGES_ADDED");
         updateIntent.putIntegerArrayListExtra("updated_contacts", updatedContacts);
         LocalBroadcastManager.getInstance(this).sendBroadcast(updateIntent);
+    }
+
+    private void scheduleMessage(String message, long triggerAtMillis) {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!alarmManager.canScheduleExactAlarms()) {
+                Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                intent.setData(Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+                Toast.makeText(this, "Por favor permite alarmas exactas", Toast.LENGTH_LONG).show();
+                return;
+            }
+        }
+
+        Intent intent = new Intent(this, MessageSchedulerReceiver.class);
+        intent.putExtra("message", message);
+        intent.putExtra("receiver", contactName);
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                this,
+                (int) System.currentTimeMillis(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
+    }
+
+    private void showDateTimePicker(String message) {
+        Calendar currentTime = Calendar.getInstance();
+
+        new DatePickerDialog(this, R.style.CustomDatePickerDialog, (view, year, month, day) -> {
+            Calendar selectedDate = Calendar.getInstance();
+            selectedDate.set(year, month, day);
+
+            new TimePickerDialog(this, R.style.CustomTimePickerDialog, (view1, hour, minute) -> {
+                selectedDate.set(Calendar.HOUR_OF_DAY, hour);
+                selectedDate.set(Calendar.MINUTE, minute);
+
+                long triggerTime = selectedDate.getTimeInMillis();
+                scheduleMessage(message, triggerTime);
+
+                SnackbarUtils.showSuccess(Objects.requireNonNull(this.getCurrentFocus()), this, R.string.message_scheduled +
+                        new SimpleDateFormat(this.getString(R.string.date_format), Locale.getDefault()).format(triggerTime));
+
+            }, currentTime.get(Calendar.HOUR_OF_DAY), currentTime.get(Calendar.MINUTE), true).show();
+
+        }, currentTime.get(Calendar.YEAR), currentTime.get(Calendar.MONTH),
+                currentTime.get(Calendar.DAY_OF_MONTH)).show();
     }
 
     // -------------------------------------------------

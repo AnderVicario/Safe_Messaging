@@ -1,8 +1,11 @@
 package com.av19.ui;
 
 import android.annotation.SuppressLint;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -20,6 +23,7 @@ import retrofit2.Response;
 
 @SuppressLint("CustomSplashScreen")
 public class SplashActivity extends BaseLocaleActivity {
+    @SuppressLint("ObsoleteSdkInt")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,6 +36,16 @@ public class SplashActivity extends BaseLocaleActivity {
         // Cargar al sesión guardada desde SharedPreferences
         SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
         String token = prefs.getString("auth_token", null);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    "schedule_channel",
+                    "Mensajes Programados",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel);
+        }
 
         Intent intent;
         if (token != null) {

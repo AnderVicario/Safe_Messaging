@@ -60,4 +60,6 @@
     <string name="choose_from_gallery">Abrir galería</string>
     <string name="select_photo">Elegir foto</string>
     <string name="drawer_status_offline">Desconetado</string>
+    <string name="message_scheduled">"Mensaje programado: "</string>
+    <string name="date_format">dd/MM/yyyy HH:mm</string>
 </resources>

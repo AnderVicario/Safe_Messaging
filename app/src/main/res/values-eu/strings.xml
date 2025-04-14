@@ -60,4 +60,6 @@
     <string name="choose_from_gallery">Ireki galeria</string>
     <string name="select_photo">Aukeratu argazkia</string>
     <string name="drawer_status_offline">Deskonektatuta</string>
+    <string name="message_scheduled">"Mezua programatuta: "</string>
+    <string name="date_format">yyyy/MM/dd HH:mm</string>
 </resources>
