@@ -1,10 +1,10 @@
 # UMBRA - Mensajería instantánea Cifrada
 
-![Android Studio](https://img.shields.io/badge/Android%20Studio-3DDC84.svg?style=for-the-badge&logo=android-studio&logoColor=white)
-![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white)
+[![Android](https://img.shields.io/badge/Android-3DDC84?logo=android&logoColor=white)](#)
+[![Java](https://img.shields.io/badge/Java-%23ED8B00.svg?logo=openjdk&logoColor=white)](#)
 
 ## Descripción
-Umbra es una aplicación de mensajería cifrada para Android diseñada para proteger las conversaciones de los usuarios con seguridad y privacidad. En esta primera versión, la aplicación funciona de forma local (sin conexión a internet), pero en próximas actualizaciones se implementará la funcionalidad de comunicación a través de una API REST HTTPS con cifrado híbrido.
+Umbra es una aplicación de mensajería cifrada para Android diseñada para proteger las conversaciones de los usuarios con seguridad y privacidad. En esta segunda versión, la aplicación funciona con conexión a internet, implementando la funcionalidad de comunicación con el servidor a través de una API REST HTTPS.
 
 ## Requisitos
 - Android Studio (versión más reciente recomendada)
