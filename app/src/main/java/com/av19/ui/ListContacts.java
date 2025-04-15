@@ -2,7 +2,9 @@ package com.av19.ui;
 
 import android.Manifest;
 import android.app.Activity;
+import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -41,6 +43,7 @@ import com.av19.adapters.ContactsAdapter;
 import com.av19.models.Contact;
 import com.av19.models.ContactList;
 import com.av19.models.Message;
+import com.av19.models.MessageQueue;
 import com.av19.models.api.ApiResponse;
 import com.av19.models.api.RecieveMessageResponse;
 import com.av19.models.api.UpdateProfilePicture;
@@ -50,6 +53,7 @@ import com.av19.utils.DatabaseHelper;
 import com.av19.utils.RetrofitClient;
 import com.av19.utils.SnackbarUtils;
 import com.av19.utils.WebSocketClient;
+import com.av19.widgets.MessageWidget;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
@@ -166,6 +170,9 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
         // Conectar el WebSocket desde el manager
         Log.d("ListContacts", "Registrar websocket");
         LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, new IntentFilter("NEW_MESSAGES_ADDED"));
+
+        MessageQueue.getInstance(this).clear();
+        updateWidget();
     }
 
     private BroadcastReceiver messageReceiver = new BroadcastReceiver() {
@@ -179,6 +186,13 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             }
         }
     };
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MessageQueue.getInstance(this).clear();
+        updateWidget();
+    }
 
     @Override
     protected void onDestroy() {
@@ -390,6 +404,9 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             editor.remove("auth_token");
             editor.remove("profile_picture");
             editor.apply();
+
+            MessageQueue.getInstance(this).clear();
+            MessageQueue.resetInstance();
 
             stopService(new Intent(this, BackgroundWebSocketService.class));
             DatabaseHelper.removeInstance(currentUser);
@@ -612,5 +629,18 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
             }
         }
+    }
+
+    private void updateWidget() {
+        Context context = getApplicationContext();
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+        ComponentName widgetComponent = new ComponentName(context, MessageWidget.class);
+        int[] widgetIds = appWidgetManager.getAppWidgetIds(widgetComponent);
+
+        // Forzar actualización del widget
+        Intent updateIntent = new Intent(context, MessageWidget.class);
+        updateIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+        updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
+        sendBroadcast(updateIntent);
     }
 }

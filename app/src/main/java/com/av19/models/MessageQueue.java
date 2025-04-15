@@ -8,23 +8,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MessageQueue {
-    private static final String PREFS_NAME = "session";
+    private static final String PREFS_NAME = "widget_prefs";
     private static final String KEY_QUEUE = "message_queue";
     private static final int MAX_MESSAGES = 5;
 
+    private static MessageQueue instance;
     private final SharedPreferences prefs;
     private final Gson gson = new Gson();
 
-    public MessageQueue(Context context) {
-        prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+    private MessageQueue(Context context) {
+        prefs = context.getApplicationContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+    }
+
+    public static synchronized MessageQueue getInstance(Context context) {
+        if (instance == null) {
+            instance = new MessageQueue(context);
+        }
+        return instance;
     }
 
     public void addMessage(Message message) {
         List<Message> messages = getAllMessages();
         messages.add(0, message);
 
-        // Mantener solo los últimos 5 mensajes
-        if(messages.size() > MAX_MESSAGES) {
+        if (messages.size() > MAX_MESSAGES) {
             messages = messages.subList(0, MAX_MESSAGES);
         }
 
@@ -45,5 +52,10 @@ public class MessageQueue {
         prefs.edit()
                 .putString(KEY_QUEUE, gson.toJson(messages))
                 .apply();
+    }
+
+    // Resetear la instancia al cerrar sesión (opcional)
+    public static void resetInstance() {
+        instance = null;
     }
 }

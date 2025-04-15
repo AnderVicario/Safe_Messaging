@@ -7,6 +7,7 @@ public class Message {
     private Integer contactId;
     private String message;
     private boolean isSender;
+    private String sender;
     private Date sentAt;
 
     public Message() {
@@ -48,8 +49,16 @@ public class Message {
         return isSender;
     }
 
-    public void setSender(boolean sender) {
-        isSender = sender;
+    public void setIsSender(boolean isSender) {
+        this.isSender = isSender;
+    }
+
+    public String getSender() {
+        return sender;
+    }
+
+    public void setSender(String sender) {
+        this.sender = sender;
     }
 
     public Date getSentAt() {

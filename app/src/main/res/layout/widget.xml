@@ -1,61 +1,174 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/widget_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="8dp"
-    android:background="@color/primary">
+    android:background="@color/surface">
 
-    <!-- Primer mensaje -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:layout_margin="5dp">
+
+        <ImageView
+            android:id="@+id/iv_logo"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/cdnlogo_com_whatsapp2"
+            android:scaleType="fitCenter"
+            android:layout_marginEnd="8dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:layout_gravity="center|left"
+            android:text="@string/app_name"
+            android:textColor="@color/primary"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            tools:layout_editor_absoluteX="16dp"
+            tools:layout_editor_absoluteY="16dp" />
+
+    </LinearLayout>
+
+    <!-- Estado vacío -->
     <TextView
-        android:id="@+id/message_text_0"
+        android:id="@+id/empty_state"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="4dp"
-        android:textColor="@color/surface"
+        android:text="@string/no_messages"
+        android:textColor="@color/onSurface"
         android:textSize="16sp"
-        android:text="Mensaje 1" />
+        android:gravity="center"
+        android:padding="12dp"
+        android:visibility="gone"/>
 
-    <!-- Segundo mensaje -->
-    <TextView
-        android:id="@+id/message_text_1"
+    <!-- Mensajes -->
+    <LinearLayout
+        android:id="@+id/messages_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="4dp"
-        android:textColor="@color/surface"
-        android:textSize="16sp"
-        android:text="Mensaje 2" />
+        android:orientation="vertical">
 
-    <!-- Tercer mensaje -->
-    <TextView
-        android:id="@+id/message_text_2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="4dp"
-        android:textColor="@color/surface"
-        android:textSize="16sp"
-        android:text="Mensaje 3" />
+        <!-- Mensaje 0 -->
+        <LinearLayout
+            android:id="@+id/message_item_0"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="4dp">
 
-    <!-- Cuarto mensaje -->
-    <TextView
-        android:id="@+id/message_text_3"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="4dp"
-        android:textColor="@color/surface"
-        android:textSize="16sp"
-        android:text="Mensaje 4" />
+            <TextView
+                android:id="@+id/sender_time_0"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/primary"/>
 
-    <!-- Quinto mensaje -->
-    <TextView
-        android:id="@+id/message_text_4"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="4dp"
-        android:textColor="@color/surface"
-        android:textSize="16sp"
-        android:text="Mensaje 5" />
+            <TextView
+                android:id="@+id/message_body_0"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/onSurface"/>
+        </LinearLayout>
 
+        <!-- Mensaje 1 -->
+        <LinearLayout
+            android:id="@+id/message_item_1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <TextView
+                android:id="@+id/sender_time_1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/primary"/>
+
+            <TextView
+                android:id="@+id/message_body_1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/onSurface"/>
+        </LinearLayout>
+
+        <!-- Mensaje 2 -->
+        <LinearLayout
+            android:id="@+id/message_item_2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <TextView
+                android:id="@+id/sender_time_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/primary"/>
+
+            <TextView
+                android:id="@+id/message_body_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/onSurface"/>
+        </LinearLayout>
+
+        <!-- Mensaje 3 -->
+        <LinearLayout
+            android:id="@+id/message_item_3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <TextView
+                android:id="@+id/sender_time_3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/primary"/>
+
+            <TextView
+                android:id="@+id/message_body_3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/onSurface"/>
+        </LinearLayout>
+
+        <!-- Mensaje 4 -->
+        <LinearLayout
+            android:id="@+id/message_item_4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <TextView
+                android:id="@+id/sender_time_4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/primary"/>
+
+            <TextView
+                android:id="@+id/message_body_4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/onSurface"/>
+        </LinearLayout>
+
+    </LinearLayout>
 </LinearLayout>

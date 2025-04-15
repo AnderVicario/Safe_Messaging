@@ -7,6 +7,8 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -22,6 +24,7 @@ import com.av19.R;
 import com.av19.models.Message;
 import com.av19.models.MessageQueue;
 import com.av19.models.api.RecieveMessageResponse;
+import com.av19.widgets.MessageWidget;
 
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
@@ -91,6 +94,7 @@ public class BackgroundWebSocketService extends Service {
                 showNotification(sender);
             }
         });
+        fetchAndProcessMessages();
     }
 
     // --------------------------------------------------------
@@ -106,7 +110,7 @@ public class BackgroundWebSocketService extends Service {
                     "Servicio de mensajes",
                     NotificationManager.IMPORTANCE_LOW
             );
-            ((NotificationManager) getSystemService(NotificationManager.class)).createNotificationChannel(channel);
+            getSystemService(NotificationManager.class).createNotificationChannel(channel);
         }
         return new NotificationCompat.Builder(this, channelId)
                 .setContentTitle(getString(R.string.websocket_service))
@@ -166,7 +170,7 @@ public class BackgroundWebSocketService extends Service {
         DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
         SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
         Set<Integer> updatedContacts = new HashSet<>();
-        MessageQueue messageQueue = new MessageQueue(this);
+        MessageQueue messageQueue = MessageQueue.getInstance(this);
 
         try {
             List<String> existingTimestamps = getExistingTimestamps(db);
@@ -193,7 +197,7 @@ public class BackgroundWebSocketService extends Service {
                 Message messageData = new Message();
                 messageData.setContactId(contactId);
                 messageData.setMessage(msg.getEncrypted_message());
-                messageData.setSender(sender.equals(currentUser));
+                messageData.setSender(sender);
                 messageData.setSentAt(convertStringToDate(msg.getTimestamp()));
                 messageQueue.addMessage(messageData);
             }
@@ -201,6 +205,7 @@ public class BackgroundWebSocketService extends Service {
         } finally {
             db.close();
         }
+        updateWidget();
     }
 
     // --------------------------------------------------------
@@ -283,5 +288,12 @@ public class BackgroundWebSocketService extends Service {
             Log.e("ContactList", "Error parsing date: " + dateString, e);
             return null;
         }
+    }
+
+    private void updateWidget() {
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
+        ComponentName widgetComponent = new ComponentName(this, MessageWidget.class);
+        int[] appWidgetIds = appWidgetManager.getAppWidgetIds(widgetComponent);
+        new MessageWidget().onUpdate(this, appWidgetManager, appWidgetIds);
     }
 }
