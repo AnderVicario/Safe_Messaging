@@ -1,13 +1,8 @@
 package com.av19.ui;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlarmManager;
-import android.app.DatePickerDialog;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -34,7 +29,6 @@ import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -44,14 +38,12 @@ import com.av19.R;
 import com.av19.adapters.MessagesAdapter;
 import com.av19.models.Message;
 import com.av19.models.api.MessageCreate;
-import com.av19.models.api.RecieveMessageResponse;
 import com.av19.models.api.SendMessageResponse;
 import com.av19.utils.ApiService;
 import com.av19.utils.DatabaseHelper;
 import com.av19.utils.MessageSchedulerReceiver;
 import com.av19.utils.RetrofitClient;
 import com.av19.utils.SnackbarUtils;
-import com.av19.utils.WebSocketClient;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
@@ -93,11 +85,11 @@ public class Conversation extends BaseLocaleActivity {
 
     private FrameLayout btnLocation;
 
-    // Variables de datos
+    // Variables
     private String contactId, contactName;
     private String currentUser;
 
-    // Formateador de fecha en UTC
+    // Formateador de fecha
     private final SimpleDateFormat sdfUtc = new SimpleDateFormat(DATE_FORMAT, Locale.getDefault());
 
     @Override
@@ -140,7 +132,7 @@ public class Conversation extends BaseLocaleActivity {
         }
     };
 
-    // Inicializar la interfaz de usuario y las propiedades de la ventana.
+    // Inicializar la interfaz de usuario y las propiedades de la ventana
     private void initUI() {
         EdgeToEdge.enable(this);
         setContentView(R.layout.conversation);
@@ -156,7 +148,7 @@ public class Conversation extends BaseLocaleActivity {
         btnLocation = findViewById(R.id.frl_location);
     }
 
-    // Recuperar los extras del intent.
+    // Recuperar los extras del intent
     private void initIntentData() {
         Intent intent = getIntent();
         contactId = intent.getStringExtra("contact_id");
@@ -177,7 +169,7 @@ public class Conversation extends BaseLocaleActivity {
                 .getString("auth_token", null);
     }
 
-    // Configurar la barra de herramientas.
+    // Configurar la toolbar
     private void initToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -187,7 +179,7 @@ public class Conversation extends BaseLocaleActivity {
         }
     }
 
-    // Configurar el listener del botón de enviar.
+    // Configurar el listener del botón de enviar
     private void initListeners() {
         btnSend.setOnClickListener(v -> {
             String messageText = messageEditText.getText().toString().trim();
@@ -349,7 +341,6 @@ public class Conversation extends BaseLocaleActivity {
                 db.setTransactionSuccessful();
                 Log.d(TAG, "Conversación importada correctamente");
             } finally {
-                // Asegurarse de que la transacción finalice y la base de datos se cierre
                 db.endTransaction();
                 db.close();
             }
@@ -384,10 +375,6 @@ public class Conversation extends BaseLocaleActivity {
     // --- Base de Datos -------
     // -------------------------
 
-    /**
-     * Obtiene todos los mensajes para el contacto actual.
-     * Utilizado para exportación y otras operaciones que requieren todos los datos.
-     */
     private List<Message> getMessagesFromDatabase() {
         List<Message> messages = new ArrayList<>();
         DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
@@ -431,10 +418,6 @@ public class Conversation extends BaseLocaleActivity {
         return messages;
     }
 
-    /**
-     * Almacena un mensaje en la base de datos.
-     * Método centralizado para guardar mensajes.
-     */
     private void storeMessageInDatabase(int contactId, boolean isSender, String message, String timestamp) {
         DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
         SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
@@ -460,41 +443,9 @@ public class Conversation extends BaseLocaleActivity {
         }
     }
 
-    /**
-     * Sobrecarga que utiliza la fecha actual.
-     * Para mensajes nuevos enviados por el usuario.
-     */
     private void storeMessageInDatabase(int contactId, boolean isSender, String message) {
         String timestamp = sdfUtc.format(new Date());
         storeMessageInDatabase(contactId, isSender, message, timestamp);
-    }
-
-    /**
-     * Recupera las marcas de tiempo de mensajes locales.
-     * Utilizado para evitar duplicación durante la sincronización.
-     */
-    private List<String> getLocalMessageTimestamps() {
-        List<String> timestamps = new ArrayList<>();
-        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
-        SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
-
-        try {
-            Cursor cursor = db.rawQuery(
-                    "SELECT sent_at FROM messages",
-                    null
-            );
-
-            while (cursor.moveToNext()) {
-                timestamps.add(cursor.getString(cursor.getColumnIndexOrThrow("sent_at")));
-            }
-            cursor.close();
-        } catch (Exception e) {
-            Log.e(TAG, "Error al obtener timestamps de mensajes", e);
-        } finally {
-            db.close();
-        }
-
-        return timestamps;
     }
 
     private Date convertStringToDate(String dateString) {
@@ -506,45 +457,13 @@ public class Conversation extends BaseLocaleActivity {
         }
     }
 
-    /**
-     * Obtiene el ID de contacto basado en su nombre.
-     * @param contactName Nombre del contacto a buscar
-     * @return ID del contacto o -1 si no se encuentra
-     */
-    private int getContactIdByName(String contactName) {
-        DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
-        SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
-        int id = -1;
-
-        try {
-            Cursor cursor = db.rawQuery(
-                    "SELECT id FROM contacts WHERE name = ?",
-                    new String[]{contactName}
-            );
-
-            if (cursor.moveToFirst()) {
-                id = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
-            }
-            cursor.close();
-        } catch (Exception e) {
-            Log.e(TAG, "Error al buscar contacto por nombre", e);
-        } finally {
-            db.close();
-        }
-
-        return id;
-    }
-
     // -------------------------
     // --- Envío de Mensajes ---
     // -------------------------
 
-    /**
-     * Encripta, envía mediante API y almacena el mensaje localmente.
-     */
     private void sendAndStoreMessage(String messageText) {
         String encryptedMessage = messageText;
-        // ENCRIPTAR AQUI
+        // ENCRIPTAR AQUI TODO
 
         if (encryptedMessage == null) {
             Log.e(TAG, "La encriptación falló");
@@ -577,7 +496,7 @@ public class Conversation extends BaseLocaleActivity {
     }
 
     private void notifyContactListUpdate() {
-        // Crear lista con el ID del contacto actual
+        // Crear lista con el id del contacto
         ArrayList<Integer> updatedContacts = new ArrayList<>();
         updatedContacts.add(Integer.parseInt(contactId));
 
@@ -659,9 +578,6 @@ public class Conversation extends BaseLocaleActivity {
     // --- Actualizaciones de la Interfaz de Usuario ---
     // -------------------------------------------------
 
-    /**
-     * Actualiza el RecyclerView con los mensajes más recientes.
-     */
     public void refreshMessagesUI() {
         List<Message> messages = getMessagesFromDatabase();
         MessagesAdapter adapter = new MessagesAdapter(messages);

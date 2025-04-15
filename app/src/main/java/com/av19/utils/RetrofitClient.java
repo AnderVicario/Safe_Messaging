@@ -11,17 +11,15 @@ public class RetrofitClient {
 
     public static Retrofit getRetrofitInstance() {
         if (retrofit == null) {
-            // Crear el interceptor para logging
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-            logging.setLevel(HttpLoggingInterceptor.Level.BODY);  // Log completo
+            logging.setLevel(HttpLoggingInterceptor.Level.BODY); // para imprimir el log
 
-            // Obtener cliente inseguro + logging
+            // Obtener cliente inseguro + logging (es prok sino daba error con el http normal)
             OkHttpClient okHttpClient = UnsafeOkHttpsClient.getUnsafeOkHttpClient()
                     .newBuilder()
-                    .addInterceptor(logging) // Agregar logging
+                    .addInterceptor(logging)
                     .build();
 
-            // Configurar Retrofit con el cliente HTTP modificado
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
                     .client(okHttpClient)

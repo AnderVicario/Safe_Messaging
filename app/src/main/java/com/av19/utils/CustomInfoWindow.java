@@ -35,7 +35,6 @@ public class CustomInfoWindow extends InfoWindow {
 
     @Override
     public void onClose() {
-        // Puedes agregar lógica para cuando se cierre el InfoWindow si es necesario
     }
 }
 

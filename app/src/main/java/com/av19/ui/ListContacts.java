@@ -42,10 +42,8 @@ import com.av19.R;
 import com.av19.adapters.ContactsAdapter;
 import com.av19.models.Contact;
 import com.av19.models.ContactList;
-import com.av19.models.Message;
 import com.av19.models.MessageQueue;
 import com.av19.models.api.ApiResponse;
-import com.av19.models.api.RecieveMessageResponse;
 import com.av19.models.api.UpdateProfilePicture;
 import com.av19.utils.ApiService;
 import com.av19.utils.BackgroundWebSocketService;
@@ -58,21 +56,11 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 
-import net.sqlcipher.Cursor;
-import net.sqlcipher.database.SQLiteDatabase;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
-import java.util.Set;
-import java.util.TimeZone;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -256,7 +244,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
     }
 
     private void initializeImageLaunchers(ImageView user_profile_image) {
-        // Inicializar launcher para seleccionar imagen de la galería
+        // Seleccionar imagen de la galería
         pickImageLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if(result.getResultCode() == Activity.RESULT_OK && result.getData() != null){
                 Uri imageUri = result.getData().getData();
@@ -270,7 +258,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             }
         });
 
-        // Inicializar launcher para tomar foto con la cámara
+        // Sacar foto con la cámara
         cameraLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if (result.getResultCode() == Activity.RESULT_OK) {
                 try {
@@ -436,9 +424,9 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
 
     private void showLanguageDialog() {
         final String[] languages = {
-                "Euskera",   // Ej: "Euskera"
-                "English",    // Ej: "English"
-                "Castellano"       // Ej: "Español"
+                "Euskera",
+                "English",
+                "Castellano"
         };
 
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);

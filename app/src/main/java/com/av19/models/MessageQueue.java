@@ -1,8 +1,11 @@
 package com.av19.models;
+
 import android.content.Context;
 import android.content.SharedPreferences;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +57,7 @@ public class MessageQueue {
                 .apply();
     }
 
-    // Resetear la instancia al cerrar sesión (opcional)
+    // Resetear la instancia al cerrar sesión
     public static void resetInstance() {
         instance = null;
     }

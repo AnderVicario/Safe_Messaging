@@ -14,7 +14,6 @@ import com.av19.models.MessageQueue;
 import com.av19.ui.SplashActivity;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 

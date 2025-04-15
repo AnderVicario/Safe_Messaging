@@ -149,17 +149,4 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS contacts");
         onCreate(db);
     }
-
-    public void updateUserPhoto(String username, byte[] newPhoto) {
-        SQLiteDatabase db = getEncryptedWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put("photo", newPhoto);
-
-        int rowsUpdated = db.update("contacts", values, "name = ?", new String[]{username});
-
-        if (rowsUpdated == 0) {
-            throw new IllegalStateException("No se pudo actualizar la foto. Verifica que el usuario existe.");
-        }
-    }
 }

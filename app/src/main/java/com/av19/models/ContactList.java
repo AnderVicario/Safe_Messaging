@@ -108,7 +108,7 @@ public class ContactList {
         }
     }
 
-    // Método para cargar los mensajes asociados a un contacto
+    // Cargar mensajes asociadsos a un contacto
     private List<Message> loadMessagesForContact(SQLiteDatabase db, int contactId) {
         List<Message> messages = new ArrayList<>();
         Cursor messageCursor = db.rawQuery(

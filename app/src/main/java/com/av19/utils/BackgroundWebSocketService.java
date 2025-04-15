@@ -44,7 +44,6 @@ import java.util.TimeZone;
 
 import retrofit2.Call;
 import retrofit2.Callback;
-import retrofit2.Converter;
 import retrofit2.Response;
 
 public class BackgroundWebSocketService extends Service {
@@ -53,9 +52,9 @@ public class BackgroundWebSocketService extends Service {
     private static final String NOTIFICATION_GROUP_KEY = "messages_group";
     private static final int SUMMARY_ID = 0;
 
-    // --------------------------------------------------------
-    // Ciclo de vida del servicio
-    // --------------------------------------------------------
+    // -----------------
+    // Ciclo de vida
+    // ------------------
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {

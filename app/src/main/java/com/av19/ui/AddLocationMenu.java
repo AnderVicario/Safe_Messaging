@@ -49,7 +49,7 @@ public class AddLocationMenu extends BaseLocaleActivity {
         setupWindow();
         setContentView(R.layout.map_menu);
 
-        // Configurar el botón: se encuentra oculto por defecto en el XML
+        // Configurar el botón
         ExtendedFloatingActionButton buttonSend = findViewById(R.id.button_send);
         buttonSend.setOnClickListener(v -> {
             if (currentMarker != null) {
