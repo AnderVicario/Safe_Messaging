@@ -160,7 +160,9 @@ public class Conversation extends BaseLocaleActivity {
     private void initIntentData() {
         Intent intent = getIntent();
         contactId = intent.getStringExtra("contact_id");
+        Log.d("Conversation", contactId);
         contactName = intent.getStringExtra("contact_name");
+        Log.d("Conversation", contactName);
         byte[] photo = getIntent().getByteArrayExtra("contact_photo");
 
         profileName.setText(contactName);

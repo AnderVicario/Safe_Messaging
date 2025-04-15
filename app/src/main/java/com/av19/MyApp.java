@@ -33,6 +33,10 @@ public class MyApp extends Application implements Application.ActivityLifecycleC
         }
     }
 
+    public int getActivityCount() {
+        return activityCount.intValue();
+    }
+
     // Resto de métodos del ciclo de vida (pueden estar vacíos)
     @Override public void onActivityCreated(Activity activity, Bundle savedInstanceState) {}
     @Override public void onActivityResumed(Activity activity) {}

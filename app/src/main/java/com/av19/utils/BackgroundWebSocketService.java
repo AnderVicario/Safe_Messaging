@@ -6,6 +6,7 @@ import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
@@ -20,10 +21,12 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.av19.MyApp;
 import com.av19.R;
 import com.av19.models.Message;
 import com.av19.models.MessageQueue;
 import com.av19.models.api.RecieveMessageResponse;
+import com.av19.ui.Conversation;
 import com.av19.widgets.MessageWidget;
 
 import net.sqlcipher.Cursor;
@@ -41,12 +44,14 @@ import java.util.TimeZone;
 
 import retrofit2.Call;
 import retrofit2.Callback;
+import retrofit2.Converter;
 import retrofit2.Response;
 
 public class BackgroundWebSocketService extends Service {
 
     private WebSocketClient webSocketClient;
-    private int notificationId = 0;
+    private static final String NOTIFICATION_GROUP_KEY = "messages_group";
+    private static final int SUMMARY_ID = 0;
 
     // --------------------------------------------------------
     // Ciclo de vida del servicio
@@ -91,7 +96,6 @@ public class BackgroundWebSocketService extends Service {
             @Override
             public void onNewMessageReceived(String sender) {
                 fetchAndProcessMessages();
-                showNotification(sender);
             }
         });
         fetchAndProcessMessages();
@@ -118,25 +122,43 @@ public class BackgroundWebSocketService extends Service {
                 .build();
     }
 
-    @SuppressLint("ObsoleteSdkInt")
-    private void showNotification(String sender) {
-        String channelId = "messages_channel";
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelId)
-                .setContentTitle(getString(R.string.websocket_message))
-                .setContentText(getString(R.string.websocket_message_from) + " " + sender)
-                .setSmallIcon(R.drawable.cdnlogo_com_whatsapp2)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+    private void showNotification(String sender, String message, int contactId) {
+        // Verificar si la app está en segundo plano
+        MyApp app = (MyApp) getApplication();
+        if (app.getActivityCount() > 0) return;
 
+        // Intent para abrir conversación específica
+        Intent conversationIntent = new Intent(this, Conversation.class);
+        conversationIntent.putExtra("contact_id", Integer.toString(contactId));
+        conversationIntent.putExtra("contact_name", sender);
+        conversationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this,
+                contactId,
+                conversationIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        // Notificación individual
+        NotificationCompat.Builder individualBuilder = new NotificationCompat.Builder(this, "messages_channel")
+                .setContentTitle(sender)
+                .setContentText(message)
+                .setSmallIcon(R.drawable.cdnlogo_com_whatsapp2)
+                .setGroup(NOTIFICATION_GROUP_KEY)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true);
+
+        // Notificación resumen agrupada
+        NotificationCompat.Builder summaryBuilder = new NotificationCompat.Builder(this, "messages_channel")
+                .setContentTitle(getString(R.string.new_message))
+                .setSmallIcon(R.drawable.cdnlogo_com_whatsapp2)
+                .setGroup(NOTIFICATION_GROUP_KEY)
+                .setGroupSummary(true);
+
+        // Mostrar
         NotificationManager notificationManager = getSystemService(NotificationManager.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    channelId,
-                    "Mensajes",
-                    NotificationManager.IMPORTANCE_DEFAULT
-            );
-            notificationManager.createNotificationChannel(channel);
-        }
-        notificationManager.notify(notificationId++, builder.build());
+        notificationManager.notify(contactId, individualBuilder.build());
+        notificationManager.notify(SUMMARY_ID, summaryBuilder.build());
     }
 
     // --------------------------------------------------------
@@ -200,6 +222,9 @@ public class BackgroundWebSocketService extends Service {
                 messageData.setSender(sender);
                 messageData.setSentAt(convertStringToDate(msg.getTimestamp()));
                 messageQueue.addMessage(messageData);
+
+                // Notificaciones
+                showNotification(sender, msg.getEncrypted_message(), contactId);
             }
             notifyUI(updatedContacts);
         } finally {
