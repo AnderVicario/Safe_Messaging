@@ -19,15 +19,22 @@ import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.av19.R;
+import com.av19.models.Message;
+import com.av19.models.MessageQueue;
 import com.av19.models.api.RecieveMessageResponse;
 
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.TimeZone;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -159,6 +166,7 @@ public class BackgroundWebSocketService extends Service {
         DatabaseHelper dbHelper = DatabaseHelper.getInstance(this, currentUser);
         SQLiteDatabase db = dbHelper.getEncryptedWritableDatabase();
         Set<Integer> updatedContacts = new HashSet<>();
+        MessageQueue messageQueue = new MessageQueue(this);
 
         try {
             List<String> existingTimestamps = getExistingTimestamps(db);
@@ -180,6 +188,14 @@ public class BackgroundWebSocketService extends Service {
 
                 storeMessage(db, contactId, msg);
                 updatedContacts.add(contactId);
+
+                // Widget
+                Message messageData = new Message();
+                messageData.setContactId(contactId);
+                messageData.setMessage(msg.getEncrypted_message());
+                messageData.setSender(sender.equals(currentUser));
+                messageData.setSentAt(convertStringToDate(msg.getTimestamp()));
+                messageQueue.addMessage(messageData);
             }
             notifyUI(updatedContacts);
         } finally {
@@ -256,5 +272,16 @@ public class BackgroundWebSocketService extends Service {
     private String getCurrentUser() {
         SharedPreferences prefs = getSharedPreferences("session", MODE_PRIVATE);
         return prefs.getString("auth_token", null);
+    }
+
+    private Date convertStringToDate(String dateString) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS", Locale.getDefault());
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        try {
+            return sdf.parse(dateString);
+        } catch (ParseException e) {
+            Log.e("ContactList", "Error parsing date: " + dateString, e);
+            return null;
+        }
     }
 }

@@ -9,6 +9,9 @@ public class Message {
     private boolean isSender;
     private Date sentAt;
 
+    public Message() {
+    }
+
     public Message(Integer id, Integer contactId, String message, boolean isSender, Date sentAt) {
         this.id = id;
         this.contactId = contactId;

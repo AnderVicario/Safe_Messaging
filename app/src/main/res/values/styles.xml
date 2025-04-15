@@ -18,22 +18,4 @@
     <style name="RoundedDialog" parent="">
         <item name="android:background">@color/surface</item>
     </style>
-    <style name="CustomDatePickerDialog" parent="Theme.Material3.DayNight.Dialog">
-        <item name="android:background">@color/surface</item>
-        <item name="colorAccent">@color/primary</item>
-        <item name="android:textColorPrimary">@color/primary</item>
-        <item name="android:textColorPrimaryInverse">@color/surface</item>
-        <item name="android:textColorSecondary">@color/onSurface</item>
-        <item name="android:textColorSecondaryInverse">@color/secondary</item>
-        <item name="colorOnPrimary">@color/onSecondary</item>
-    </style>
-    <style name="CustomTimePickerDialog" parent="Theme.Material3.DayNight.Dialog">
-        <item name="android:background">@color/surface</item>
-        <item name="colorAccent">@color/primary</item>
-        <item name="android:textColorPrimary">@color/primary</item>
-        <item name="android:textColorPrimaryInverse">@color/surface</item>
-        <item name="android:textColorSecondary">@color/onSurface</item>
-        <item name="android:textColorSecondaryInverse">@color/secondary</item>
-        <item name="colorOnPrimary">@color/onSecondary</item>
-    </style>
 </resources>

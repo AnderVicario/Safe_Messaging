@@ -52,6 +52,9 @@ import com.av19.utils.MessageSchedulerReceiver;
 import com.av19.utils.RetrofitClient;
 import com.av19.utils.SnackbarUtils;
 import com.av19.utils.WebSocketClient;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
 
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
@@ -612,24 +615,42 @@ public class Conversation extends BaseLocaleActivity {
     private void showDateTimePicker(String message) {
         Calendar currentTime = Calendar.getInstance();
 
-        new DatePickerDialog(this, R.style.CustomDatePickerDialog, (view, year, month, day) -> {
-            Calendar selectedDate = Calendar.getInstance();
-            selectedDate.set(year, month, day);
+        // Builder para DatePicker
+        MaterialDatePicker<Long> datePicker = MaterialDatePicker.Builder.datePicker()
+                .setTitleText("Selecciona una fecha")
+                .setSelection(currentTime.getTimeInMillis())
+                .build();
 
-            new TimePickerDialog(this, R.style.CustomTimePickerDialog, (view1, hour, minute) -> {
-                selectedDate.set(Calendar.HOUR_OF_DAY, hour);
-                selectedDate.set(Calendar.MINUTE, minute);
+        datePicker.addOnPositiveButtonClickListener(selection -> {
+            Calendar selectedDate = Calendar.getInstance();
+            selectedDate.setTimeInMillis(selection);
+
+            // Mostrar TimePicker
+            MaterialTimePicker timePicker = new MaterialTimePicker.Builder()
+                    .setTimeFormat(TimeFormat.CLOCK_24H)
+                    .setHour(currentTime.get(Calendar.HOUR_OF_DAY))
+                    .setMinute(currentTime.get(Calendar.MINUTE))
+                    .setTitleText("Selecciona la hora")
+                    .build();
+
+            timePicker.addOnPositiveButtonClickListener(view -> {
+                selectedDate.set(Calendar.HOUR_OF_DAY, timePicker.getHour());
+                selectedDate.set(Calendar.MINUTE, timePicker.getMinute());
 
                 long triggerTime = selectedDate.getTimeInMillis();
                 scheduleMessage(message, triggerTime);
 
-                SnackbarUtils.showSuccess(Objects.requireNonNull(this.getCurrentFocus()), this, R.string.message_scheduled +
-                        new SimpleDateFormat(this.getString(R.string.date_format), Locale.getDefault()).format(triggerTime));
+                SnackbarUtils.showSuccess(
+                        Objects.requireNonNull(this.getCurrentFocus()),
+                        this,
+                        getString(R.string.message_scheduled) +
+                                new SimpleDateFormat(getString(R.string.date_format), Locale.getDefault()).format(triggerTime)
+                );
+            });
+            timePicker.show(getSupportFragmentManager(), "MATERIAL_TIME_PICKER");
 
-            }, currentTime.get(Calendar.HOUR_OF_DAY), currentTime.get(Calendar.MINUTE), true).show();
-
-        }, currentTime.get(Calendar.YEAR), currentTime.get(Calendar.MONTH),
-                currentTime.get(Calendar.DAY_OF_MONTH)).show();
+        });
+        datePicker.show(getSupportFragmentManager(), "MATERIAL_DATE_PICKER");
     }
 
     // -------------------------------------------------
