@@ -56,10 +56,13 @@
     <string name="snackbar_success_update_profile_picture">Se ha actualizado la foto de perfil.</string>
     <string name="snackbar_error_update_profile_picture">Ha habido un error durante la actualización de la foto de perfil.</string>
     <string name="snackbar_error_username_same">No te puedes añadir a ti mismo!</string>
-    <string name="take_photo">Sacar foto</string>
-    <string name="choose_from_gallery">Abrir galería</string>
-    <string name="select_photo">Elegir foto</string>
+    <string name="take_photo">Cámara</string>
+    <string name="choose_from_gallery">Galería</string>
+    <string name="select_photo">Elige:</string>
     <string name="drawer_status_offline">Desconetado</string>
     <string name="message_scheduled">"Mensaje programado: "</string>
     <string name="date_format">dd/MM/yyyy HH:mm</string>
+    <string name="scheduled_message_sent">Mensaje programado enviado.</string>
+    <string name="scheduled_message_error">Error al enviar el mensaje programado.</string>
+    <string name="snackbar_warning_location_permission">Permiso de ubicación denegado.</string>
 </resources>

@@ -126,6 +126,8 @@ public class BackgroundWebSocketService extends Service {
         MyApp app = (MyApp) getApplication();
         if (app.getActivityCount() > 0) return;
 
+        createMessagesChannel();
+
         // Intent para abrir conversación específica
         Intent conversationIntent = new Intent(this, Conversation.class);
         conversationIntent.putExtra("contact_id", Integer.toString(contactId));
@@ -319,5 +321,18 @@ public class BackgroundWebSocketService extends Service {
         ComponentName widgetComponent = new ComponentName(this, MessageWidget.class);
         int[] appWidgetIds = appWidgetManager.getAppWidgetIds(widgetComponent);
         new MessageWidget().onUpdate(this, appWidgetManager, appWidgetIds);
+    }
+
+    @SuppressLint("ObsoleteSdkInt")
+    private void createMessagesChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    "messages_channel",
+                    "Mensajes",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("Notificaciones de nuevos mensajes");
+            getSystemService(NotificationManager.class).createNotificationChannel(channel);
+        }
     }
 }

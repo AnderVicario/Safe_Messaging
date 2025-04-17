@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat;
 
 import com.av19.R;
 import com.av19.utils.CustomInfoWindow;
+import com.av19.utils.SnackbarUtils;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 
 import org.osmdroid.config.Configuration;
@@ -129,7 +130,7 @@ public class AddLocationMenu extends BaseLocaleActivity {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 setupLocationOverlay();
             } else {
-                Toast.makeText(this, "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show();
+                SnackbarUtils.showError(findViewById(android.R.id.content), this, getString(R.string.snackbar_warning_location_permission));
             }
         }
     }
@@ -247,8 +248,6 @@ public class AddLocationMenu extends BaseLocaleActivity {
     }
 
     private void showCoordinatesToast(GeoPoint position) {
-        Toast.makeText(this,
-                "Marcador en: " + createMarkerTitle(position),
-                Toast.LENGTH_SHORT).show();
+        SnackbarUtils.showSuccess(findViewById(android.R.id.content), this, getString(R.string.selected_marker) + createMarkerTitle(position));
     }
 }

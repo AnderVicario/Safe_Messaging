@@ -20,6 +20,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,6 +31,7 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
@@ -180,6 +183,7 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
         super.onResume();
         MessageQueue.getInstance(this).clear();
         updateWidget();
+        refreshMessagesUI(false);
     }
 
     @Override
@@ -273,20 +277,40 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
     }
 
     private void showImageSourceDialog() {
+        class IconListAdapter extends ArrayAdapter<String> {
+            private final int[] icons;
+
+            public IconListAdapter(Context context, String[] items, int[] icons) {
+                super(context, android.R.layout.select_dialog_item, items);
+                this.icons = icons;
+            }
+
+            @NonNull
+            @Override
+            public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                TextView textView = view.findViewById(android.R.id.text1);
+                textView.setCompoundDrawablesWithIntrinsicBounds(icons[position], 0, 0, 0);
+                textView.setCompoundDrawablePadding(32);
+                return view;
+            }
+        }
+
         String[] options = {getString(R.string.take_photo), getString(R.string.choose_from_gallery)};
+        int[] icons = {R.drawable.ic_camera, R.drawable.ic_gallery};
+
+        IconListAdapter adapter = new IconListAdapter(this, options, icons);
 
         new MaterialAlertDialogBuilder(this, R.style.RoundedDialog)
                 .setTitle(getString(R.string.select_photo))
-                .setItems(options, (dialog, which) -> {
+                .setAdapter(adapter, (dialog, which) -> {
                     if (which == 0) {
-                        // Cámara
                         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                             openCamera();
                         } else {
                             requestPermissionLauncher.launch(Manifest.permission.CAMERA);
                         }
                     } else {
-                        // Galería
                         Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                         pickImageLauncher.launch(intent);
                     }

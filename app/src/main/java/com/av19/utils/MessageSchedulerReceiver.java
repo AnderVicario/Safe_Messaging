@@ -34,12 +34,12 @@ public class MessageSchedulerReceiver extends BroadcastReceiver {
         apiService.sendMessage(messageCreate).enqueue(new Callback<SendMessageResponse>() {
             @Override
             public void onResponse(Call<SendMessageResponse> call, Response<SendMessageResponse> response) {
-                showNotification(context, "Mensaje programado enviado");
+                showNotification(context, context.getString(R.string.scheduled_message_sent));
             }
 
             @Override
             public void onFailure(Call<SendMessageResponse> call, Throwable t) {
-                showNotification(context, "Error al enviar mensaje programado");
+                showNotification(context, context.getString(R.string.scheduled_message_error));
             }
         });
     }
