@@ -443,8 +443,8 @@ public class Conversation extends BaseLocaleActivity {
         }
     }
 
-    private void storeMessageInDatabase(int contactId, boolean isSender, String message) {
-        String timestamp = sdfUtc.format(new Date());
+    private void storeMessageInDatabase(String timestamp, int contactId, boolean isSender, String message) {
+        /*String timestamp = sdfUtc.format(new Date());*/
         storeMessageInDatabase(contactId, isSender, message, timestamp);
     }
 
@@ -470,14 +470,7 @@ public class Conversation extends BaseLocaleActivity {
             return;
         }
 
-        // Almacenar localmente primero
-        storeMessageInDatabase(Integer.parseInt(contactId), true, messageText);
-        refreshMessagesUI();
-
-        // Actualizar ListContacts
-        notifyContactListUpdate();
-
-        // Luego enviar a la API
+        // Enviar a la API
         MessageCreate messageCreate = new MessageCreate(currentUser, contactName, encryptedMessage);
         ApiService apiService = RetrofitClient.getRetrofitInstance().create(ApiService.class);
         apiService.sendMessage(messageCreate).enqueue(new retrofit2.Callback<SendMessageResponse>() {
@@ -485,6 +478,16 @@ public class Conversation extends BaseLocaleActivity {
             public void onResponse(retrofit2.Call<SendMessageResponse> call, retrofit2.Response<SendMessageResponse> response) {
                 if (!response.isSuccessful()) {
                     Log.e(TAG, "Error en la API: " + response.errorBody());
+                }
+                else {
+                    String timestamp = response.body().getTimestamp();
+
+                    // Almacenar localmente
+                    storeMessageInDatabase(timestamp, Integer.parseInt(contactId), true, messageText);
+                    refreshMessagesUI();
+
+                    // Actualizar ListContacts
+                    notifyContactListUpdate();
                 }
             }
 

@@ -427,6 +427,8 @@ public class ListContacts extends BaseLocaleActivity implements NavigationView.O
             Intent intent = new Intent(this, SplashActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
+            /*android.os.Process.killProcess(android.os.Process.myPid());
+            System.exit(0);*/
         }
 
         drawerLayout.closeDrawer(GravityCompat.START);
