@@ -12,7 +12,7 @@ Umbra es una aplicación de mensajería cifrada para Android diseñada para prot
 - Un dispositivo Android o emulador con API level 26+ (Android 8.0 o superior)
 
 ## Instalación
-### Clonar el repositorio
+### Clonar repositorio
 ```bash
 git clone https://github.com/AnderVicario/Umbra.git
 ```
